@@ -77,6 +77,8 @@ class Flight:
         return hash(self.name)
 
     def __eq__(self, other):
+        if other is None:
+            return False
         if type(other) == str:
             return self.name == other
         return self.name == other.name

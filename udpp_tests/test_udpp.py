@@ -11,6 +11,7 @@ from NNBound.nnBound import NNBoundModel
 from ScheduleMaker import df_to_schedule
 import udpp_tests.make_sol_df as sol
 from UDPP.udppModel import UDPPmodel
+from Istop.istop import Istop
 
 pd.set_option('display.max_rows', 500)
 pd.set_option('display.max_columns', 500)
@@ -43,6 +44,9 @@ def run_test(n_flights, c_reduction, df, n_runs, test=False,
         slot_list, fl_list, airport = schedule_maker.make_sl_fl_from_data(n_flights=n_flights,
                                                                           capacity_reduction=c_reduction,
                                                                           compute=True)
+
+        mod = Istop(slot_list, fl_list)
+        mod.run()
         if compute:
             print(airport)
             # print("i", n_flights, c_reduction, i)

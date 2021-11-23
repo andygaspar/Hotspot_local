@@ -3,10 +3,10 @@ from typing import Callable, Union, List
 from GlobalFuns.globalFuns import HiddenPrints
 from Istop.AirlineAndFlight.istopFlight import IstopFlight
 from Istop.Solvers.gurobySolver import GurobiSolver
-from Istop.Solvers.mip_solver import MipSolver
-from Istop.Solvers.xpress_solver import XpressSolver
+# from Istop.Solvers.mip_solver import MipSolver
+# from Istop.Solvers.xpress_solver import XpressSolver
 from ModelStructure import modelStructure as mS
-# from mip import *
+
 import sys
 from itertools import combinations
 from Istop.AirlineAndFlight.istopAirline import IstopAirline
@@ -94,19 +94,19 @@ class Istop(mS.ModelStructure):
     def run(self, max_time=120, timing=False, verbose=False):
         feasible = self.check_and_set_matches()
 
-        self.problem = GurobiSolver(self)
-        solution_vect, offers_vect = self.problem.run(timing=timing, verbose=verbose)
+
         if feasible:
-
-            try:
-
-                self.problem = XpressSolver(self, max_time)
-                solution_vect, offers_vect = self.problem.run(timing=timing)
-
-            except:
-                print("using MIP")
-                self.problem = MipSolver(self, max_time)
-                solution_vect, offers_vect = self.problem.run(timing=timing)
+            self.problem = GurobiSolver(self)
+            solution_vect, offers_vect = self.problem.run(timing=timing, verbose=verbose)
+            # try:
+            #
+            #     self.problem = XpressSolver(self, max_time)
+            #     solution_vect, offers_vect = self.problem.run(timing=timing)
+            #
+            # except:
+            #     print("using MIP")
+            #     self.problem = MipSolver(self, max_time)
+            #     solution_vect, offers_vect = self.problem.run(timing=timing)
 
             self.assign_flights(solution_vect)
 
