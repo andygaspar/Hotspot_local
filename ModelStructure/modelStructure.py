@@ -24,7 +24,7 @@ class ModelStructure:
 
         self.set_cost_vect()
 
-        self.airlines, self.airDict = self.make_airlines(air_ctor)
+        self.airlines, self.airDict, self.airByName = self.make_airlines(air_ctor)
 
         self.numAirlines = len(self.airlines)
 
@@ -146,7 +146,9 @@ class ModelStructure:
 
         air_dict = dict(zip(airlines, range(len(airlines))))
 
-        return airlines, air_dict
+        air_by_name = dict(zip([airline.name for airline in airlines], airlines))
+
+        return airlines, air_dict, air_by_name
 
     def make_df(self):
         slot_index = [flight.slot.index for flight in self.flights]
@@ -154,7 +156,6 @@ class ModelStructure:
         airlines = [flight.airlineName for flight in self.flights]
         slot_time = [flight.slot.time for flight in self.flights]
         eta = [flight.eta for flight in self.flights]
-        airline = [flight.airlineName for flight in self.flights]
 
         return pd.DataFrame({"slot": slot_index, "flight": flights, "airline": airlines, "time": slot_time,
                              "eta": eta})

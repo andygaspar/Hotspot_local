@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 from itertools import combinations
 
-from Auction.Agents.agent import DefaultAgent
+from Auction.Agents.defaultAagent import DefaultAgent
 from Auction.AirlineAndFlight.auction_flight import AuctionFlight
 from Istop.AirlineAndFlight.istopFlight import IstopFlight
 from Istop.Preferences import preference
@@ -21,5 +21,7 @@ class AuctionAirline(air.Airline):
         self.flights: List[AuctionFlight]
 
         self.agent = DefaultAgent()
+
+        self.credits = len(flights) * 10
 
 

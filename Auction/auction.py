@@ -21,13 +21,13 @@ class Auction(ms.ModelStructure):
 
         self.airlines: List[AuctionAirline]
 
-        for airline in self.airlines:
-            airline.agent.set_bids(airline.flights, 50)
+
 
     def run(self):
-        bids_mat = np.array([flight.bids for flight in self.flights])
-        print(bids_mat)
-        print(np.argmax(bids_mat, axis=1))
+
+        for airline in self.airlines:
+            airline.agent.set_bids(self, airline)
+
         assigned_flights = []
         for slot in self.slots:
             winner = None
@@ -38,7 +38,34 @@ class Auction(ms.ModelStructure):
                     max_bid = flight.bids[slot.index]
             assigned_flights.append(winner)
 
-        print(assigned_flights)
         for i in range(len(assigned_flights)):
             assigned_flights[i].newSlot = self.slots[i]
         solution.make_solution(self)
+
+    def reset(self, slots, flights: List[AuctionFlight]):
+
+        self.slots = slots
+
+        self.flights = [flight for flight in flights if flight is not None]
+
+        self.set_flight_index()
+
+        self.set_cost_vect()
+
+        self.set_flights_attributes()
+
+        self.initialTotalCosts = self.compute_costs(self.flights, "initial")
+
+        self.scheduleMatrix = self.set_schedule_matrix()
+
+        self.emptySlots = []
+
+        self.solution, self.report = None, None
+
+        self.df = self.make_df()
+
+        for airline in self.airlines:
+            air_flights = [flight for flight in flights if flight.airlineName == airline.name]
+            airline.numFlights = len(air_flights)
+
+            airline.flights = air_flights
