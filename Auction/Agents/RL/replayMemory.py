@@ -22,7 +22,7 @@ class ReplayMemory:
         self.sampleSize = sample_size
         self.capacity = capacity
 
-    def add_record(self, state: np.array, action: int, nextState: np.array, reward: float, done: bool):
+    def add_record(self, state, action, nextState, reward):
         if len(self.actions) >= self.capacity:
             self.states = self.states[1:]
             self.actions = self.actions[1:]
@@ -34,14 +34,13 @@ class ReplayMemory:
         self.actions.append(action)
         self.nextStates.append(nextState)
         self.rewards.append(reward)
-        self.dones.append(done)
         self.size += 1
 
     def get_sample(self):
         random_idx = np.random.choice(range(self.size), size=self.sampleSize, replace=False).astype(int)
-        return [self.states[i] for i in random_idx], [self.actions[i] for i in random_idx], \
-               [self.nextStates[i] for i in random_idx], [self.rewards[i] for i in random_idx],\
-               [self.dones[i] for i in random_idx]
+        return [self.states[i] for i in random_idx], [self.actions[i] for i in random_idx],\
+               [self.rewards[i] for i in random_idx]
+
 
     def export_memory(self):
         with open("replay_memory/states.csv", 'a+', newline='') as write_obj:

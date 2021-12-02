@@ -45,35 +45,25 @@ class FFNetwork:
             bids = torch.flatten(self.network(X)).to(self.device)
             return bids.cpu().numpy().reshape(self.numFlights, self.bidsSize)
 
-
-    def update_weights(self, batch: tuple, gamma: float, target_network):
+    def update_weights(self, batch):
         criterion = torch.nn.MSELoss()
 
-        states, actions, nextStates, rewards, dones = batch
+        states, actions, rewards = batch
 
         # if sum(dones) > 0:
         #    pass
 
         X = torch.tensor([el.tolist() for el in states]).to(self.device).float().reshape(-1, self.inputDimension)
-        X_next = torch.tensor([el.tolist() for el in nextStates]).to(self.device)\
-            .reshape(-1, self.inputDimension)
         actions = torch.tensor(actions).to(self.device)
         rewards = torch.tensor(rewards).to(self.device)
-        dones = torch.tensor(dones, dtype=int).to(self.device)
-        for i in range(5):
-            curr_Q = self.network(X).gather(1, actions.unsqueeze(1)).to(self.device).squeeze(1)
 
-            with torch.no_grad():
-                next_Q = target_network.network(X_next).to(self.device)
-                max_next_Q = torch.max(next_Q, 1)[0]
-                expected_Q = (rewards + (1 - dones) * gamma * max_next_Q).to(self.device)
 
-            loss = criterion(curr_Q, expected_Q.detach())
-            self.loss = loss.item()
-            self.optimizer.zero_grad()
-            loss.backward()
-            #torch.nn.utils.clip_grad_norm_(self.network.parameters(), 1)
-            self.optimizer.step()
+        loss = rewards * torch.log(actions)
+        self.loss = loss.item()
+        self.optimizer.zero_grad()
+        loss.backward()
+        #torch.nn.utils.clip_grad_norm_(self.network.parameters(), 1)
+        self.optimizer.step()
 
     def take_weights(self, model_network):
         self.network.load_state_dict(model_network.network.state_dict())

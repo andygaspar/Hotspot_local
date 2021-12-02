@@ -23,7 +23,8 @@ def make_performance_df(model):
     for airline in model.airlines:
         num_flights.append(airline.numFlights)
         initial_costs.append(model.compute_costs(airline.flights, "initial"))
-        final_costs.append(model.compute_costs(airline.flights, "final"))
+        airline.finalCosts = model.compute_costs(airline.flights, "final")
+        final_costs.append(airline.finalCosts)
         initial_delay.append(model.compute_delays(airline.flights, "initial"))
         final_delay.append(model.compute_delays(airline.flights, "final"))
         reduction.append(0 if model.compute_costs(airline.flights, "initial") == 0 else np.round(

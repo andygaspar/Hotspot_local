@@ -1,6 +1,7 @@
 import numpy as np
 
 from Auction.Agents.Networks.ff_net import FFNetwork
+from Auction.Agents.RL.replayMemory import ReplayMemory
 from Auction.Agents.agent import Agent
 from ModelStructure.modelStructure import ModelStructure
 
@@ -9,12 +10,16 @@ class FFAgent(Agent):
 
     def __init__(self, airline, other_airlines):
         super().__init__()
+        self.AI = True
+
         # cost vect len + positional encoding ==>  airline flight's enconding
         # owner 0 = B, 1 = C + positional encoding in the schedule = => other airlines flight's encoding
         input_dimension = len(airline.flights) * (15 + 15) + (2 + 15) * 10
         self.network = FFNetwork(input_dimension, airline.numFlights, 15)
 
-    def set_bids(self, model: ModelStructure, airline):
+        self.replayMemory = ReplayMemory()
+
+    def set_bids(self, model: ModelStructure, airline, training):
 
         input_vect = np.array([])
         for flight in airline.flights:
@@ -37,6 +42,10 @@ class FFAgent(Agent):
 
         bids_mat = self.network.get_bids(input_vect)
 
+        if training:
+            self.state = input_vect
+            self.action = bids_mat
+
         bids_mat = self.flight_sum_to_zero(bids_mat)
         bids_mat = self.credits_standardisation(bids_mat, airline.credits)
 
@@ -44,3 +53,7 @@ class FFAgent(Agent):
         for flight in airline.flights:
             flight.bids = bids_mat[i]
             i += 1
+
+    def train(self):
+        batch = self.replayMemory.get_sample()
+        self.network.update_weights(batch)

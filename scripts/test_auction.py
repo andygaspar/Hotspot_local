@@ -62,3 +62,11 @@ for run in range(10):
     auction.reset(slot_list, fl_list)
     auction.run()
     auction.print_performance()
+
+import numpy as np
+
+a = np.array([[3,3,3], [2,1,2]])
+
+b = np.mean(a, axis=1)
+
+a- b.T

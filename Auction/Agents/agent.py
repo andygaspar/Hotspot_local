@@ -7,14 +7,25 @@ import numpy as np
 class Agent(ABC):
 
     def __init__(self):
+        self.replayMemory = None
+        self.AI = False
+        self.state = None
+        self.action = None
+        self.reward = None
+
+    def set_bids(self, model, airline, training):
         pass
 
-    def set_bids(self, model, airline):
+    def add_record(self, reward):
+        if self.AI:
+            self.replayMemory.add_record(self.state, self.action, reward)
+
+    def train(self):
         pass
 
     @staticmethod
     def flight_sum_to_zero(bids_mat):
-        return bids_mat - np.mean(bids_mat, axis=1)
+        return (bids_mat.T - np.mean(bids_mat, axis=1)).T
 
     @staticmethod
     def credits_standardisation(bids_mat: np.array, n_credits: int):

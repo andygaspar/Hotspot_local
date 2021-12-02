@@ -11,7 +11,7 @@ class DefaultAgent(Agent):
     def __init__(self):
         super().__init__()
 
-    def set_bids(self, model, airline):
+    def set_bids(self, model, airline, training):
         flights = airline.flights
         bids_mat = np.zeros((len(flights), flights[0].costVect.shape[0]))
         j = 0
