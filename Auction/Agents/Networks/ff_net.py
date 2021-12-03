@@ -9,59 +9,63 @@ class FFNetwork:
     hidden: int
     network: torch.nn.Sequential
 
-    def __init__(self, input_dim: int, n_flights, bids_size):
-        self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    def __init__(self, input_dim: int, n_flights, bids_size, device):
+        self.device = device
         self.loss = 0
         self.inputDimension = input_dim
         self.numFlights = n_flights
         self.bidsSize = bids_size
-        self.outputDimension = n_flights * bids_size
+        self.outputDimension = n_flights * (bids_size + 1)
         self.hidden = 10
-        self.network = nn.Sequential(
+        self.network_1 = nn.Sequential(
             nn.Linear(self.inputDimension, 30),
             nn.LeakyReLU(),
+            nn.Linear(30, 30)
+        ).to(self.device)
+        self.network_mean = nn.Sequential(
             nn.Linear(30, self.outputDimension)
-            # nn.LeakyReLU(),
-            # nn.Linear(self.inputDimension, self.inputDimension),
-            # nn.LeakyReLU(),
-            # nn.Linear(self.inputDimension, self.inputDimension),
-            # nn.LeakyReLU(),
-            # nn.Linear(2 * self.inputDimension, 2 * self.inputDimension),
-            # nn.LeakyReLU(),
-            # nn.Linear(2 * self.inputDimension,  self.inputDimension),
-        )
-        self.network.to(self.device)
+        ).to(self.device)
+        self.network_variance = nn.Sequential(
+            nn.Linear(30, self.outputDimension)
+        ).to(self.device)
         torch.cuda.current_device()
         print(torch.cuda.is_available())
-        self.optimizer = optim.Adam(self.network.parameters(), lr=1e-5, weight_decay=1e-5)
+        params = list(self.network_1.parameters()) + list(self.network_mean.parameters()) + list(self.network_variance.parameters())
+        self.optimizer = optim.Adam(params, lr=1e-5, weight_decay=1e-5)
         # self.optimizer = optim.SGD(self.network.parameters(), lr=1e-2, momentum=0.9)
     #
     # def sample_action(self, input_vect: torch.tensor) -> int:
     #     return torch.argmax(torch.flatten(input_vect)).item()
 
-    def get_bids(self, input_vect: np.array):
-        X = torch.from_numpy(input_vect).to(self.device).reshape(1, self.inputDimension).type(dtype=torch.float32)
+    def forward(self, input_vect):
+        x = self.network_1(input_vect)
+        mu = self.network_mean(x)
+        sigma = torch.abs(self.network_variance(x))
+        return mu, sigma
+
+    def get_bids(self, input_vect: torch.tensor):
+        X = input_vect.reshape(1, self.inputDimension)
         with torch.no_grad():
-            bids = torch.flatten(self.network(X)).to(self.device)
-            return bids.cpu().numpy().reshape(self.numFlights, self.bidsSize)
+            mu, sigma = self.forward(X)
+            bids = torch.normal(mean=mu, std=sigma)
+            return bids
 
     def update_weights(self, batch):
-        criterion = torch.nn.MSELoss()
+        NM = torch.distributions.MultivariateNormal
 
         states, actions, rewards = batch
 
         # if sum(dones) > 0:
         #    pass
+        loss = 0
+        for i in range(len(states)):
+            mu, sigma = self.forward(states[i])
+            loss += rewards[i] * NM(mu, torch.eye(len(sigma)).to(self.device)*sigma).log_prob(actions[i])
 
-        X = torch.tensor([el.tolist() for el in states]).to(self.device).float().reshape(-1, self.inputDimension)
-        actions = torch.tensor(actions).to(self.device)
-        rewards = torch.tensor(rewards).to(self.device)
-
-
-        loss = rewards * torch.log(actions)
         self.loss = loss.item()
         self.optimizer.zero_grad()
         loss.backward()
+        print("loss", loss.item())
         #torch.nn.utils.clip_grad_norm_(self.network.parameters(), 1)
         self.optimizer.step()
 
@@ -73,3 +77,4 @@ class FFNetwork:
 
     def save_weights(self, filename: str):
         torch.save(self.network.state_dict(), filename + '.pt')
+

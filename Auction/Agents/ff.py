@@ -1,4 +1,5 @@
 import numpy as np
+import torch
 
 from Auction.Agents.Networks.ff_net import FFNetwork
 from Auction.Agents.RL.replayMemory import ReplayMemory
@@ -11,13 +12,17 @@ class FFAgent(Agent):
     def __init__(self, airline, other_airlines):
         super().__init__()
         self.AI = True
+        self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+        self.startTraining = 200
+        self.sampleSize = 200
+        self.capacity = 10_000
 
         # cost vect len + positional encoding ==>  airline flight's enconding
         # owner 0 = B, 1 = C + positional encoding in the schedule = => other airlines flight's encoding
         input_dimension = len(airline.flights) * (15 + 15) + (2 + 15) * 10
-        self.network = FFNetwork(input_dimension, airline.numFlights, 15)
+        self.network = FFNetwork(input_dimension, airline.numFlights, 15, self.device)
 
-        self.replayMemory = ReplayMemory()
+        self.replayMemory = ReplayMemory(sample_size=self.sampleSize, capacity=self.capacity)
 
     def set_bids(self, model: ModelStructure, airline, training):
 
@@ -40,12 +45,14 @@ class FFAgent(Agent):
 
                 input_vect = np.concatenate((input_vect, other_air_flight))
 
-        bids_mat = self.network.get_bids(input_vect)
+        input_vect = torch.from_numpy(input_vect).to(self.device).type(dtype=torch.float32)
+        action = self.network.get_bids(input_vect)
+        sample = action.cpu().numpy().reshape(airline.numFlights, model.numFlights + 1)
 
         if training:
             self.state = input_vect
-            self.action = bids_mat
-
+            self.action = action
+        bids_mat = np.multiply(sample[:, :model.numFlights].T, sample[:, -1]).T
         bids_mat = self.flight_sum_to_zero(bids_mat)
         bids_mat = self.credits_standardisation(bids_mat, airline.credits)
 
@@ -55,5 +62,10 @@ class FFAgent(Agent):
             i += 1
 
     def train(self):
-        batch = self.replayMemory.get_sample()
-        self.network.update_weights(batch)
+        if self.replayMemory.size > self.startTraining:
+            batch = self.replayMemory.get_sample()
+            self.network.update_weights(batch)
+
+    def add_record(self, reward):
+        reward = torch.tensor(reward).to(self.device)
+        self.replayMemory.add_record(self.state, self.action, reward)

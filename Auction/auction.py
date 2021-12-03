@@ -22,7 +22,7 @@ class Auction(ms.ModelStructure):
         self.airlines: List[AuctionAirline]
 
 
-    def run(self, training=False):
+    def run(self, training=True):
 
         for airline in self.airlines:
             airline.agent.set_bids(self, airline, training)

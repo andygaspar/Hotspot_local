@@ -47,7 +47,7 @@ auction.airByName["A"].agent = FFAgent(auction.airByName["A"], auction)
 auction.run()
 auction.print_performance()
 
-for run in range(10):
+for run in range(100_000):
     slot_list, fl_list, airport = schedule_maker.make_sl_fl_from_data(n_flights=n_flights,
                                                                               capacity_reduction=c_reduction,
                                                                               compute=True)
@@ -58,15 +58,9 @@ for run in range(10):
     # print([flight.airlineName for flight in fl_list])
     # print([flight.eta for flight in fl_list])
     fl_to_airline(fl_list)
-
+    print(run)
     auction.reset(slot_list, fl_list)
     auction.run()
-    auction.print_performance()
+    if run % 10 == 0 and run > 100:
+        auction.print_performance()
 
-import numpy as np
-
-a = np.array([[3,3,3], [2,1,2]])
-
-b = np.mean(a, axis=1)
-
-a- b.T

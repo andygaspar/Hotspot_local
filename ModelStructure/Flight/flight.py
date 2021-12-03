@@ -31,6 +31,8 @@ class Flight:
 
         self.etaSlot = None
 
+        self.costFun = None
+
         self.costVect = None
 
         self.maxCost = None

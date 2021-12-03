@@ -103,6 +103,7 @@ class RealisticSchedule:
                                                                    flight_name=airline + str(i), airline_name=airline,
                                                                    delay_cost_vect=delay_cost_vect, fl_type=fl_type)
                 slot_list.append(slot)
+                flight.costFun = cost_fun
                 flight_list.append(flight)
 
         return slot_list, flight_list, airport
