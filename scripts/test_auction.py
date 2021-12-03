@@ -41,26 +41,38 @@ slot_list, fl_list, airport = schedule_maker.make_sl_fl_from_data(n_flights=n_fl
 fl_to_airline(fl_list)
 print([fl.airlineName for fl in fl_list])
 auction = Auction(slot_list, fl_list)
+auction2 = Auction(slot_list, fl_list)
+
 
 auction.airByName["A"].agent = FFAgent(auction.airByName["A"], auction)
 
 auction.run()
 auction.print_performance()
 
+auction2.run()
+auction2.print_performance()
+
 for run in range(100_000):
     slot_list, fl_list, airport = schedule_maker.make_sl_fl_from_data(n_flights=n_flights,
                                                                               capacity_reduction=c_reduction,
                                                                               compute=True)
-    # airlines = ["A", "B", "C"]
-    #
-    # for flight in fl_list:
-    #     flight.airlineName = np.random.choice(airlines)
-    # print([flight.airlineName for flight in fl_list])
-    # print([flight.eta for flight in fl_list])
+
     fl_to_airline(fl_list)
     print(run)
     auction.reset(slot_list, fl_list)
-    auction.run()
-    if run % 10 == 0 and run > 100:
-        auction.print_performance()
+    auction.run(training=True)
+    if run % 50 == 0 and run > 20:
+        for test_run in range(5):
+            slot_list, fl_list, airport = schedule_maker.make_sl_fl_from_data(n_flights=n_flights,
+                                                                              capacity_reduction=c_reduction,
+                                                                              compute=True)
+
+            fl_to_airline(fl_list)
+            print(" ")
+            auction.reset(slot_list, fl_list)
+            auction.run(training=False)
+            auction.print_performance()
+            auction2.reset(slot_list, fl_list)
+            auction2.run(training=False)
+            auction2.print_performance()
 

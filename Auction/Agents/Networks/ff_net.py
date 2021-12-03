@@ -15,18 +15,24 @@ class FFNetwork:
         self.inputDimension = input_dim
         self.numFlights = n_flights
         self.bidsSize = bids_size
-        self.outputDimension = n_flights * (bids_size + 1)
+        self.outputDimension = (bids_size + 1)
         self.hidden = 10
         self.network_1 = nn.Sequential(
-            nn.Linear(self.inputDimension, 30),
+            nn.Linear(self.inputDimension, 256),
             nn.LeakyReLU(),
-            nn.Linear(30, 30)
+            nn.Linear(256, 256),
+            nn.LeakyReLU(),
+            nn.Linear(256, 128)
         ).to(self.device)
         self.network_mean = nn.Sequential(
-            nn.Linear(30, self.outputDimension)
+            nn.Linear(128, 64),
+            nn.LeakyReLU(),
+            nn.Linear(64, self.outputDimension)
         ).to(self.device)
         self.network_variance = nn.Sequential(
-            nn.Linear(30, self.outputDimension)
+            nn.Linear(128, 64),
+            nn.LeakyReLU(),
+            nn.Linear(64, self.outputDimension)
         ).to(self.device)
         torch.cuda.current_device()
         print(torch.cuda.is_available())
@@ -44,9 +50,8 @@ class FFNetwork:
         return mu, sigma
 
     def get_bids(self, input_vect: torch.tensor):
-        X = input_vect.reshape(1, self.inputDimension)
         with torch.no_grad():
-            mu, sigma = self.forward(X)
+            mu, sigma = self.forward(input_vect)
             bids = torch.normal(mean=mu, std=sigma)
             return bids
 
@@ -59,8 +64,12 @@ class FFNetwork:
         #    pass
         loss = 0
         for i in range(len(states)):
+            s = states[i]
+
+            r  = rewards[i]
+            a = actions[i]
             mu, sigma = self.forward(states[i])
-            loss += rewards[i] * NM(mu, torch.eye(len(sigma)).to(self.device)*sigma).log_prob(actions[i])
+            loss += rewards[i] * NM(mu.flatten(), torch.eye(len(sigma.flatten())).to(self.device)*sigma.flatten()).log_prob(actions[i].flatten())
 
         self.loss = loss.item()
         self.optimizer.zero_grad()

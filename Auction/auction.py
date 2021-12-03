@@ -22,7 +22,7 @@ class Auction(ms.ModelStructure):
         self.airlines: List[AuctionAirline]
 
 
-    def run(self, training=True):
+    def run(self, training=False):
 
         for airline in self.airlines:
             airline.agent.set_bids(self, airline, training)
@@ -41,9 +41,10 @@ class Auction(ms.ModelStructure):
             assigned_flights[i].newSlot = self.slots[i]
         solution.make_solution(self)
 
-        for airline in self.airlines:
-            airline.agent.add_record(airline.finalCosts)
-            airline.agent.train()
+        if training:
+            for airline in self.airlines:
+                airline.agent.add_record(airline.finalCosts)
+                airline.agent.train()
 
     def reset(self, slots, flights: List[AuctionFlight]):
 

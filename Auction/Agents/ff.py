@@ -11,6 +11,8 @@ class FFAgent(Agent):
 
     def __init__(self, airline, other_airlines):
         super().__init__()
+        self.airline = airline
+        self.other_airlines = other_airlines
         self.AI = True
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         self.startTraining = 200
@@ -19,18 +21,22 @@ class FFAgent(Agent):
 
         # cost vect len + positional encoding ==>  airline flight's enconding
         # owner 0 = B, 1 = C + positional encoding in the schedule = => other airlines flight's encoding
-        input_dimension = len(airline.flights) * (15 + 15) + (2 + 15) * 10
-        self.network = FFNetwork(input_dimension, airline.numFlights, 15, self.device)
+        position = 15
+        costs = 15
+        airline_ = 2
+        n_other_airlines = 10
+        input_dimension = (self.airline.numFlights + 1) * (costs + position) + (airline_ + position) * n_other_airlines
+        self.network = FFNetwork(input_dimension, self.airline.numFlights, 15, self.device)
 
         self.replayMemory = ReplayMemory(sample_size=self.sampleSize, capacity=self.capacity)
 
     def set_bids(self, model: ModelStructure, airline, training):
 
-        input_vect = np.array([])
+        schedule = np.array([])
         for flight in airline.flights:
             position = np.zeros(model.numFlights)
             position[flight.slot.index] = 1
-            input_vect = np.concatenate((input_vect, flight.costVect, position))
+            schedule = np.concatenate((schedule, flight.costVect/1000, position))
 
         other_airlines = [air for air in model.airlines if air != airline]
         for air in other_airlines:
@@ -43,15 +49,21 @@ class FFAgent(Agent):
 
                 other_air_flight[2:] = flight.costVect
 
-                input_vect = np.concatenate((input_vect, other_air_flight))
+                schedule = np.concatenate((schedule, other_air_flight))
 
-        input_vect = torch.from_numpy(input_vect).to(self.device).type(dtype=torch.float32)
-        action = self.network.get_bids(input_vect)
-        sample = action.cpu().numpy().reshape(airline.numFlights, model.numFlights + 1)
+        input_vects = []
+        for flight in airline.flights:
+            position = np.zeros(model.numFlights)
+            position[flight.slot.index] = 1
+            input_vects.append(np.concatenate((flight.costVect/1000, position, schedule)))
+
+        input_vects = torch.from_numpy(np.array(input_vects)).to(self.device).type(dtype=torch.float32)
+        actions = self.network.get_bids(input_vects)
+        sample = actions.cpu().numpy().reshape(airline.numFlights, model.numFlights + 1)
 
         if training:
-            self.state = input_vect
-            self.action = action
+            self.state = input_vects
+            self.action = actions
         bids_mat = np.multiply(sample[:, :model.numFlights].T, sample[:, -1]).T
         bids_mat = self.flight_sum_to_zero(bids_mat)
         bids_mat = self.credits_standardisation(bids_mat, airline.credits)
