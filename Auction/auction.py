@@ -10,7 +10,6 @@ from ModelStructure.Slot.slot import Slot
 from ModelStructure.Solution import solution
 
 
-
 class Auction(ms.ModelStructure):
 
     def __init__(self, slot_list: List[Slot], flight_list: List[Flight]):
@@ -21,12 +20,7 @@ class Auction(ms.ModelStructure):
 
         self.airlines: List[AuctionAirline]
 
-
-    def run(self, training=False):
-
-        for airline in self.airlines:
-            airline.agent.set_bids(self, airline, training)
-
+    def run(self):
         assigned_flights = []
         for slot in self.slots:
             winner = None
@@ -40,11 +34,6 @@ class Auction(ms.ModelStructure):
         for i in range(len(assigned_flights)):
             assigned_flights[i].newSlot = self.slots[i]
         solution.make_solution(self)
-
-        if training:
-            for airline in self.airlines:
-                airline.agent.add_record(airline.finalCosts)
-                airline.agent.train()
 
     def reset(self, slots, flights: List[AuctionFlight]):
 

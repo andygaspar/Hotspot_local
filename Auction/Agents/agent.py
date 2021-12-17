@@ -16,7 +16,7 @@ class Agent(ABC):
     def set_bids(self, model, airline, training):
         pass
 
-    def add_record(self, reward):
+    def add_record(self, reward, action=None):
         if self.AI:
             self.replayMemory.add_record(self.state, self.action, reward)
 
