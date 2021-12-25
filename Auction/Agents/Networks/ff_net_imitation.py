@@ -86,7 +86,7 @@ class FFNetworkImitation:
             self.mu.append(mu)
             self.sigma.append(sigma)
             self.actions.append(actions[i])
-            error += torch.mean(torch.abs(mu - sigma))
+            error += torch.mean(torch.abs(mu - actions[i]))
 
             loss += - 1/len(states) * NM(mu.flatten(), torch.eye(len(sigma.flatten())).to(self.device)*sigma.flatten()).log_prob(actions[i].flatten())
 

@@ -65,18 +65,18 @@ auction_step(auction, trainer, training=False, initial=True, print_p=True)
 auction_step(auction2, trainer2, training=False, initial=True, print_p=True)
 
 iteration = 0
-for run in range(1):
-    for r in range(1):
+for run in range(100):
+    for r in range(10):
         iteration = run * 100 + r * 10
         print(iteration)
         for j in range(5):
-            slot_list, fl_list, airport = schedule_maker.make_sl_fl_from_data(n_flights=n_flights,
-                                                                                      capacity_reduction=c_reduction,
-                                                                                      compute=True)
+            # slot_list, fl_list, airport = schedule_maker.make_sl_fl_from_data(n_flights=n_flights,
+            #                                                                           capacity_reduction=c_reduction,
+            #                                                                           compute=True)
 
             fl_to_airline(fl_list)
 
-            auction_step(auction2, trainer2, training=True, slot_list=slot_list, fl_list=fl_list)
+            # auction_step(auction2, trainer2, training=True, slot_list=slot_list, fl_list=fl_list)
             action = torch.ones((5,16))
             for i, flight in enumerate(auction2.airByName["A"].flights):
                 action[i, :15] = torch.tensor(flight.bids)
@@ -86,16 +86,16 @@ for run in range(1):
 
     auction.airByName["A"].agent.network.print_params()
 
-    if run > start_training:
-        for test_run in range(5):
-            slot_list, fl_list, airport = schedule_maker.make_sl_fl_from_data(n_flights=n_flights,
-                                                                              capacity_reduction=c_reduction,
-                                                                              compute=True)
+    # if run > start_training:
+    #     for test_run in range(5):
+    #         slot_list, fl_list, airport = schedule_maker.make_sl_fl_from_data(n_flights=n_flights,
+    #                                                                           capacity_reduction=c_reduction,
+    #                                                                           compute=True)
+    #
+    #         fl_to_airline(fl_list)
+    #         print(" ")
+    #         auction_step(auction, trainer, training=False, slot_list=slot_list, fl_list=fl_list, print_p=True)
+    #         auction_step(auction2, trainer2, training=False, slot_list=slot_list, fl_list=fl_list, print_p=True)
 
-            fl_to_airline(fl_list)
-            print(" ")
-            auction_step(auction, trainer, training=False, slot_list=slot_list, fl_list=fl_list, print_p=True)
-            auction_step(auction2, trainer2, training=False, slot_list=slot_list, fl_list=fl_list, print_p=True)
 
-
-auction.airByName["A"].agent.replayMemory.export_memory()
+# auction.airByName["A"].agent.replayMemory.export_memory()

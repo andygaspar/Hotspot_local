@@ -9,6 +9,8 @@ from gurobipy import Model, GRB, quicksum, Env
 
 import time
 
+from Istop.AirlineAndFlight.istopFlight import IstopFlight
+
 
 def stop(model, where):
 
@@ -20,6 +22,7 @@ def stop(model, where):
         if run_time > model._time_limit and abs(objbst - objbnd) < 0.005 * abs(objbst):
             print("stop at", run_time)
             model.terminate()
+
 
 class GurobiSolver:
 
@@ -49,14 +52,13 @@ class GurobiSolver:
     def set_variables(self):
 
         self.x = self.m.addVars([(i, j) for i in range(len(self.slots)) for j in range(len(self.slots))],
-                       vtype=GRB.BINARY)
+                                vtype=GRB.BINARY)
 
         self.c = self.m.addVars([i for i in range(len(self.matches))], vtype=GRB.BINARY)
 
-
     def set_constraints(self):
 
-        self.flights: List[Flight]
+        self.flights: List[IstopFlight]
 
         for i in self.emptySlots:
             for j in self.slots:
@@ -67,9 +69,12 @@ class GurobiSolver:
                 self.m.addConstr(self.x[flight.index, flight.index] == 1)
             else:
                 self.m.addConstr(quicksum(self.x[flight.index, j.index] for j in flight.compatibleSlots) == 1)
+                comp_slot_cons_list = [self.x[flight.index, j.index] for j in flight.compatibleSlots]
+                self.m.addSOS(GRB.SOS_TYPE1, comp_slot_cons_list, list(range(len(comp_slot_cons_list))))
 
         for j in self.slots:
-            self.m.addConstr(quicksum(self.x[i.index, j.index] for i in self.slots) <= 1)
+            # self.m.addConstr(quicksum(self.x[i.index, j.index] for i in self.slots) <= 1)
+            self.m.addSOS(GRB.SOS_TYPE1, [self.x[i.index, j.index] for i in self.slots], list(range(len(self.slots))))
 
         for flight in self.flights:
             for j in flight.notCompatibleSlots:
@@ -79,7 +84,10 @@ class GurobiSolver:
             self.m.addConstr(
                 quicksum(self.x[flight.index, slot.index]
                        for slot in self.slots if slot != flight.slot) \
-                <= quicksum([self.c[j] for j in self.get_match_for_flight(flight)]))
+                <= quicksum([self.c[j] for j in self.get_match_for_flight(flight)])
+            )
+            offers_for_flights = [self.c[j] for j in self.get_match_for_flight(flight)]
+            self.m.addSOS(GRB.SOS_TYPE1, offers_for_flights, list(range(len(offers_for_flights))))
 
             self.m.addConstr(quicksum([self.c[j] for j in self.get_match_for_flight(flight)]) <= 1)
 
