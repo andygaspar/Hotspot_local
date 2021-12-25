@@ -89,6 +89,10 @@ class Istop(mS.ModelStructure):
                         self.flights_in_matches.append(couple[1])
 
 
+        match = self.matches[0]
+
+
+
         print("preprocess concluded in sec:", time.time() - start, "   Number of possible offers: ", len(self.matches))
         return len(self.matches) > 0
 
