@@ -39,6 +39,7 @@ class BB:
         self.solution = []
 
         self.nodes = 0
+        self.pruned = 0
 
     def set_match_for_flight(self, flights: List[IstopFlight]):
         for flight in flights:
@@ -55,9 +56,9 @@ class BB:
 
     def step(self, solution: List[Offer], offers: list[Offer], reduction: float):
 
-        print(" nodes", self.nodes)
+        if self.nodes % 5000 == 0:
+            print("nodes", self.nodes, "pruned", self.pruned)
         if len(offers) == 0:
-            print("leaf")
             return
         else:
             self.nodes += 1
@@ -68,6 +69,7 @@ class BB:
         if l_reduction > self.best_reduction:
             self.solution = l_solution
             self.best_reduction = l_reduction
+            print("sol", self.nodes, self.best_reduction, self.solution)
 
         l_incompatible = [offer for flight in offers[0].flights for offer in flight.offers]
         l_offers = [offer for offer in offers if offer not in l_incompatible]
@@ -77,7 +79,7 @@ class BB:
         r_offers = offers[1:]
 
         if reduction + sum([offer.reduction for offer in r_offers]) < self.best_reduction:
-            print("pruned")
+            self.pruned += 1
             return
 
         self.step(solution, r_offers, reduction)
