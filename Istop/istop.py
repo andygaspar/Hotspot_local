@@ -97,6 +97,13 @@ class Istop(mS.ModelStructure):
     def run(self, max_time=120, timing=False, verbose=False, branching=False):
         feasible = self.check_and_set_matches()
 
+        bb = BB(offers=self.matches, reductions=self.reductions, flights=self.flights)
+        bb.run()
+
+        print("bb sol len ", len(bb.solution))
+        print("bb reduction ", bb.best_reduction)
+        print("solution \n", bb.solution)
+
         if feasible:
             self.problem = GurobiSolver(self)
             solution_vect, offers_vect = self.problem.run(timing=timing, verbose=verbose, branching=branching)
@@ -126,7 +133,7 @@ class Istop(mS.ModelStructure):
         solution.make_solution(self)
         self.offer_solution_maker()
 
-        bb = BB(offers=self.matches, reductions=self.reductions, flights = self.flights)
+
 
     def other_airlines_compatible_slots(self, flight):
         others_slots = []
