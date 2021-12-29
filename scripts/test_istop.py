@@ -22,11 +22,11 @@ np.random.seed(10)
 
 schedule_maker = df_to_schedule.RealisticSchedule()
 
-# n_flights = 120
-# c_reduction = 0.5
-
-n_flights = 30
+n_flights = 120
 c_reduction = 0.5
+
+# n_flights = 30
+# c_reduction = 0.5
 
 
 
@@ -48,5 +48,5 @@ for i in range(3):
 
         print("istop")
         istop = Istop(slot_list, fl_list)
-        istop.run(timing=True, verbose=True)
+        istop.run(timing=True, verbose=True, branching=True)
         # istop.print_performance()

@@ -49,12 +49,23 @@ class GurobiSolver:
         self.x = None
         self.c = None
 
+        self.reductions = model.reductions
+
     def set_variables(self):
 
         self.x = self.m.addVars([(i, j) for i in range(len(self.slots)) for j in range(len(self.slots))],
                                 vtype=GRB.BINARY)
 
         self.c = self.m.addVars([i for i in range(len(self.matches))], vtype=GRB.BINARY)
+
+    def set_priority(self):
+
+        for i in range(len(self.slots)):
+            for j in range(len(self.slots)):
+                self.x[i, j].setAttr("BranchPriority", 0)
+
+        for i, priority in enumerate(self.reductions):
+            self.c[i].setAttr("BranchPriority", int(priority))
 
     def set_constraints(self):
 
@@ -69,12 +80,12 @@ class GurobiSolver:
                 self.m.addConstr(self.x[flight.index, flight.index] == 1)
             else:
                 self.m.addConstr(quicksum(self.x[flight.index, j.index] for j in flight.compatibleSlots) == 1)
-                comp_slot_cons_list = [self.x[flight.index, j.index] for j in flight.compatibleSlots]
-                self.m.addSOS(GRB.SOS_TYPE1, comp_slot_cons_list, list(range(len(comp_slot_cons_list))))
+                # comp_slot_cons_list = [self.x[flight.index, j.index] for j in flight.compatibleSlots]
+                # self.m.addSOS(GRB.SOS_TYPE1, comp_slot_cons_list, list(range(len(comp_slot_cons_list))))
 
         for j in self.slots:
-            # self.m.addConstr(quicksum(self.x[i.index, j.index] for i in self.slots) <= 1)
-            self.m.addSOS(GRB.SOS_TYPE1, [self.x[i.index, j.index] for i in self.slots], list(range(len(self.slots))))
+            self.m.addConstr(quicksum(self.x[i.index, j.index] for i in self.slots) <= 1)
+            # self.m.addSOS(GRB.SOS_TYPE1, [self.x[i.index, j.index] for i in self.slots], list(range(len(self.slots))))
 
         for flight in self.flights:
             for j in flight.notCompatibleSlots:
@@ -86,8 +97,8 @@ class GurobiSolver:
                        for slot in self.slots if slot != flight.slot) \
                 <= quicksum([self.c[j] for j in self.get_match_for_flight(flight)])
             )
-            offers_for_flights = [self.c[j] for j in self.get_match_for_flight(flight)]
-            self.m.addSOS(GRB.SOS_TYPE1, offers_for_flights, list(range(len(offers_for_flights))))
+            # offers_for_flights = [self.c[j] for j in self.get_match_for_flight(flight)]
+            # self.m.addSOS(GRB.SOS_TYPE1, offers_for_flights, list(range(len(offers_for_flights))))
 
             self.m.addConstr(quicksum([self.c[j] for j in self.get_match_for_flight(flight)]) <= 1)
 
@@ -115,13 +126,15 @@ class GurobiSolver:
             quicksum(self.x[flight.index, j.index] * flight.fitCostVect[j.index]
                    for flight in self.flights for j in self.slots))  # s
 
-    def run(self, timing=False, verbose=False, time_limit=60):
+    def run(self, timing=False, verbose=False, time_limit=60, branching=False):
 
         self.m._time_limit = time_limit
         if not verbose:
             self.m.setParam('OutputFlag', 0)
 
         self.set_variables()
+        if branching:
+            self.set_priority()
         start = time.time()
         self.set_constraints()
         end = time.time() - start
@@ -129,13 +142,13 @@ class GurobiSolver:
             print("Constraints setting time ", end)
 
         self.set_objective()
-
+        self.m.setParam('Cuts', 3)
         start = time.time()
         self.m.optimize(stop)
         end = time.time() - start
 
         if timing:
-            print("Simplex time ", end)
+            print("Solution time ", end)
 
         status = None
         if self.m.status == 2:

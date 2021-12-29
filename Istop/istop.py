@@ -64,6 +64,7 @@ class Istop(mS.ModelStructure):
 
         self.epsilon = sys.float_info.min
         self.offerChecker = OfferChecker(self.scheduleMatrix)
+        self.reductions = None
 
         self.matches = []
         self.couples = []
@@ -88,21 +89,16 @@ class Istop(mS.ModelStructure):
                     if not self.f_in_matched(couple[1]):
                         self.flights_in_matches.append(couple[1])
 
-
-        match = self.matches[0]
-
-
-
+        self.reductions = self.offerChecker.get_reductions(self.matches)
         print("preprocess concluded in sec:", time.time() - start, "   Number of possible offers: ", len(self.matches))
         return len(self.matches) > 0
 
-    def run(self, max_time=120, timing=False, verbose=False):
+    def run(self, max_time=120, timing=False, verbose=False, branching=False):
         feasible = self.check_and_set_matches()
-
 
         if feasible:
             self.problem = GurobiSolver(self)
-            solution_vect, offers_vect = self.problem.run(timing=timing, verbose=verbose)
+            solution_vect, offers_vect = self.problem.run(timing=timing, verbose=verbose, branching=branching)
             # try:
             #
             #     self.problem = XpressSolver(self, max_time)

@@ -77,23 +77,6 @@ class OfferChecker(object):
             if len(match) > 0:
                 matches += match
 
-        all_fl_in_offer = [fl for tup in matches[0] for fl in tup]
-        m = matches[0]
-        init_cost = sum(flight.costVect[flight.slot.index] for flight in all_fl_in_offer)
-        print(init_cost)
-        init_cost_a = sum(flight.costVect[flight.slot.index] for flight in m[0])
-        init_cost_b = sum(flight.costVect[flight.slot.index] for flight in m[1])
-        init_cost = init_cost_a + init_cost_b
-        best_offer_reduction = 0
-        for perm in self.couples:
-            if np.prod(flight.etaSlot <= all_fl_in_offer[perm[i]].slot for i, flight in enumerate(all_fl_in_offer)):
-                final_cost_a = sum(flight.costVect[[all_fl_in_offer[perm[i]].slot.index]]
-                                   for i, flight in enumerate(m[0]))
-                final_cost_b = sum(flight.costVect[[all_fl_in_offer[perm[i+2]].slot.index]]
-                                   for i, flight in enumerate(m[1]))
-                offer_reduction = init_cost - final_cost_b - final_cost_a
-                if final_cost_a < init_cost_a and final_cost_b < init_cost_b and offer_reduction > best_offer_reduction:
-                        best_offer_reduction = offer_reduction
         return matches
 
     def air_triple_check(self, air_triple):
@@ -182,7 +165,6 @@ class OfferChecker(object):
                                       [fl.slot.index for fl in pairC]
 
         len_array = int(len(input_vect) / 6)
-
         self.lib.air_triple_check_.restype = ndpointer(dtype=ctypes.c_bool, shape=(len_array,))
         input_vect = np.array(input_vect).astype(np.short)
 
@@ -198,3 +180,26 @@ class OfferChecker(object):
 
     def print_triples(self):
         self.lib.print_triples_(self.obj)
+
+    def get_reductions(self, matches):
+        reductions = []
+        for match in matches:
+            shift = len(match[0])
+            all_fl_in_offer = [fl for tup in match for fl in tup]
+            init_cost_a = sum(flight.costVect[flight.slot.index] for flight in match[0])
+            init_cost_b = sum(flight.costVect[flight.slot.index] for flight in match[1])
+            init_cost = init_cost_a + init_cost_b
+            best_offer_reduction = 0
+            for perm in self.couples:
+                if np.prod(flight.etaSlot <= all_fl_in_offer[perm[i]].slot for i, flight in enumerate(all_fl_in_offer)):
+                    final_cost_a = sum(flight.costVect[[all_fl_in_offer[perm[i]].slot.index]][0]
+                                       for i, flight in enumerate(match[0]))
+                    final_cost_b = sum(flight.costVect[[all_fl_in_offer[perm[i + shift]].slot.index]][0]
+                                       for i, flight in enumerate(match[1]))
+                    offer_reduction = init_cost - final_cost_b - final_cost_a
+                    if final_cost_a < init_cost_a and final_cost_b < init_cost_b \
+                            and offer_reduction > best_offer_reduction:
+                        best_offer_reduction = offer_reduction
+            reductions.append(best_offer_reduction)
+
+        return reductions
