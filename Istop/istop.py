@@ -2,6 +2,7 @@ from typing import Callable, Union, List
 
 from GlobalFuns.globalFuns import HiddenPrints
 from Istop.AirlineAndFlight.istopFlight import IstopFlight
+from Istop.Solvers.bb import BB
 from Istop.Solvers.gurobySolver import GurobiSolver
 # from Istop.Solvers.mip_solver import MipSolver
 # from Istop.Solvers.xpress_solver import XpressSolver
@@ -124,6 +125,8 @@ class Istop(mS.ModelStructure):
 
         solution.make_solution(self)
         self.offer_solution_maker()
+
+        bb = BB(offers=self.matches, reductions=self.reductions, flights = self.flights)
 
     def other_airlines_compatible_slots(self, flight):
         others_slots = []
