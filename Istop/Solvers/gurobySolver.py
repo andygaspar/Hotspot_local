@@ -19,7 +19,7 @@ def stop(model, where):
         objbnd = model.cbGet(GRB.Callback.MIP_OBJBND)
         run_time = model.cbGet(GRB.Callback.RUNTIME)
 
-        if run_time > model._time_limit and abs(objbst - objbnd) < 0.005 * abs(objbst):
+        if run_time > model._time_limit and abs(objbst - objbnd) < 0.05 * abs(objbst):
             print("stop at", run_time)
             model.terminate()
 

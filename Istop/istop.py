@@ -102,7 +102,9 @@ class Istop(mS.ModelStructure):
 
         print("bb sol len ", len(bb.solution))
         print("bb reduction ", bb.best_reduction)
-        print("solution \n", bb.solution)
+        print("solution \n")
+        for offer in bb.solution:
+            print(offer)
 
         if feasible:
             self.problem = GurobiSolver(self)
@@ -119,12 +121,16 @@ class Istop(mS.ModelStructure):
 
             self.assign_flights(solution_vect)
 
+            print("gurobi solution")
             offers = 0
             for i in range(len(self.matches)):
                 if offers_vect[i] > 0.9:
                     self.offers_selected.append(self.matches[i])
+                    print(self.matches[i])
                     offers += 1
             print("Number of offers selected: ", offers)
+            print("reduction", self.initialTotalCosts - self.problem.m.getObjective().getValue())
+
 
         else:
             for flight in self.flights:

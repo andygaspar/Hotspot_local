@@ -43,8 +43,10 @@ def get_offers_for_flight(flight, r_offers):
 class BB:
 
     def __init__(self, offers, reductions, flights: List[IstopFlight]):
+
         self.tree = None
         self.best_reduction = 0
+        self.best_bound = 0
 
         order = np.flip(np.argsort(reductions))
         self.offers = [Offer(offers[j], reductions[j], i) for i, j in enumerate(order)]
@@ -54,6 +56,8 @@ class BB:
 
         self.nodes = 0
         self.pruned = 0
+        self.pruned_lp = 0
+        self.initSolution = False
 
     def set_match_for_flight(self, flights: List[IstopFlight]):
         for flight in flights:
@@ -70,9 +74,11 @@ class BB:
 
     def step(self, solution: List[Offer], offers: list[Offer], reduction: float):
 
-        if self.nodes % 5000 == 0:
-            print("nodes", self.nodes, "pruned", self.pruned)
+        if self.nodes % 10 == 0:
+            print("offers", len(offers), "nodes", self.nodes, "pruned", self.pruned, "pruned_lp", self.pruned_lp,
+                  "reduction", self.best_reduction)
         if len(offers) == 0:
+            self.initSolution = True
             return
         else:
             self.nodes += 1
@@ -83,30 +89,39 @@ class BB:
         if l_reduction > self.best_reduction:
             self.solution = l_solution
             self.best_reduction = l_reduction
-            print("sol", self.nodes, self.best_reduction, self.solution)
+            # print("sol", self.nodes, self.best_reduction, self.solution)
 
         l_incompatible = [offer for flight in offers[0].flights for offer in flight.offers]
-        l_offers = [offer for offer in offers if offer not in l_incompatible]
+        l_offers = [offer for offer in offers[1:] if offer not in l_incompatible]
+
+        l_lp_bound = self.run_lp(l_offers)
+
+        # print(l_lp_bound + reduction, self.best_reduction)
+
+        if self.initSolution and (reduction + sum([offer.reduction for offer in l_offers]) < self.best_reduction or\
+                reduction + l_lp_bound < self.best_reduction):
+            self.pruned += 1
+            self.pruned_lp += 1
+            print("l pruned")
+            return
 
         self.step(l_solution, l_offers, l_reduction)
 
         r_offers = offers[1:]
 
-        lp_bound = self.run_lp(r_offers)
-
-        print("bbbbbb ", lp_bound, sum([offer.reduction for offer in r_offers]))
+        r_lp_bound = self.run_lp(r_offers)
 
         if reduction + sum([offer.reduction for offer in r_offers]) < self.best_reduction:
             self.pruned += 1
             return
 
-        if reduction + lp_bound < self.best_reduction:
-            print("fooooooooooooooound")
+        if reduction + r_lp_bound < self.best_reduction:
+            self.pruned += 1
+            self.pruned_lp += 1
+            print("r pruned")
             return
 
         self.step(solution, r_offers, reduction)
-
-
 
     def run_lp(self, r_offers):
 
@@ -126,9 +141,11 @@ class BB:
         m.modelSense = GRB.MINIMIZE
         m.setParam('OutputFlag', 0)
 
-        x = m.addVars([(i, j) for i in range(len(flights)) for j in range(len(flights))], vtype=GRB.CONTINUOUS, lb=0,
+        var_type = GRB.BINARY if len(r_offers) < 60 else GRB.CONTINUOUS
+
+        x = m.addVars([(i, j) for i in range(len(flights)) for j in range(len(flights))], vtype=GRB.BINARY, lb=0,
                       ub=1)
-        c = m.addVars([i for i in range(len(r_offers))], vtype=GRB.CONTINUOUS, lb=0, ub=1)
+        c = m.addVars([i for i in range(len(r_offers))], vtype=var_type, lb=0, ub=1)
 
         for flight in flights:
             m.addConstr(
@@ -166,9 +183,9 @@ class BB:
 
         for k, offer in enumerate(r_offers):
             match = offer.offer
-            flights = [flight for pair in match for flight in pair]
-            m.addConstr(quicksum(quicksum(x[flight_index[i], flight_index[j]] for i in pair for j in flights)
-                                        for pair in match) >= (c[k]) * len(flights))
+            fls = [flight for pair in match for flight in pair]
+            m.addConstr(quicksum(quicksum(x[flight_index[i], flight_index[j]] for i in pair for j in fls)
+                                        for pair in match) >= (c[k]) * len(fls))
 
             for pair in match:
                 m.addConstr(
@@ -186,17 +203,6 @@ class BB:
 
         m.optimize()
 
-        print("\n")
-        for flight in flights:
-            print([x[flight_index[flight], slot_index[slot]].x for slot in slots])
-        print("\n")
-        print([c[k].x for k in range(len(r_offers))])
-        print("\n")
-        print("stsatus", m.status)
-        print("\n")
-
-
         initial_cost = sum([flight.cost_fun(flight.slot) for flight in flights])
         final_cost = m.getObjective().getValue()
-        print("ghghghhgh   ", initial_cost, final_cost)
         return initial_cost - final_cost
