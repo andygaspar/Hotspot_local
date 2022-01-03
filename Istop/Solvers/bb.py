@@ -83,7 +83,6 @@ class BB:
         if l_reduction > self.best_reduction:
             self.solution = l_solution
             self.best_reduction = l_reduction
-            # print("sol", self.nodes, self.best_reduction, self.solution)
 
         l_incompatible = [offer for flight in offers[0].flights for offer in flight.offers]
         l_offers = [offer for offer in offers[1:] if offer not in l_incompatible]

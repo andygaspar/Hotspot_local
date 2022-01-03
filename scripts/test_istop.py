@@ -26,7 +26,7 @@ n_flights = 120
 c_reduction = 0.5
 
 n_flights = 80
-c_reduction = 0.5
+
 
 
 
