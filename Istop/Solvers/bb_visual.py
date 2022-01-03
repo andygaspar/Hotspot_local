@@ -114,7 +114,7 @@ class BBVisual:
         if parent is not None:
             self.tree.add_edge(parent, current_node)
 
-        if self.nodes % 1 == 0:
+        if self.nodes % 30 == 0:
             # print("offers", len(offers), "nodes", self.nodes, "pruned", self.pruned, "pruned_lp", self.pruned_lp,
             #       "reduction", self.best_reduction)
             self.draw_tree()
@@ -134,12 +134,14 @@ class BBVisual:
         l_incompatible = [offer for flight in offers[0].flights for offer in flight.offers]
         l_offers = [offer for offer in offers[1:] if offer not in l_incompatible]
 
+        # if current_node == 16:
+        #     print("samba")
         l_lp_bound = self.run_lp(l_offers)
 
         # print(l_lp_bound + reduction, self.best_reduction)
 
-        if self.initSolution and (reduction + sum([offer.reduction for offer in l_offers]) < self.best_reduction or \
-                                  reduction + l_lp_bound < self.best_reduction):
+        if self.initSolution and (l_reduction + sum([offer.reduction for offer in l_offers]) < self.best_reduction or \
+                                  l_reduction + l_lp_bound < self.best_reduction):
             self.prune(current_node, "LEFT")
         else:
             self.step(l_solution, l_offers, l_reduction, current_node)
