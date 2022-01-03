@@ -89,16 +89,13 @@ class BB:
 
         l_lp_bound = self.run_lp(l_offers)
 
-        # print(l_lp_bound + reduction, self.best_reduction)
-
-        if self.initSolution and (reduction + sum([offer.reduction for offer in l_offers]) < self.best_reduction or\
-                reduction + l_lp_bound < self.best_reduction):
+        if self.initSolution and (l_reduction + sum([offer.reduction for offer in l_offers]) < self.best_reduction or\
+                l_reduction + l_lp_bound < self.best_reduction):
             self.pruned += 1
             self.pruned_lp += 1
             print("l pruned")
-            return
-
-        self.step(l_solution, l_offers, l_reduction)
+        else:
+            self.step(l_solution, l_offers, l_reduction)
 
         r_offers = offers[1:]
 

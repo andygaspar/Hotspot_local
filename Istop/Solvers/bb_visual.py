@@ -13,6 +13,7 @@ black = "#000000"
 blue = "#1f78b4"
 green = "#008000"
 red = "#FF0000"
+yellow = "#FFFF00"
 
 
 class Offer:
@@ -64,11 +65,17 @@ class BBVisual:
         self.set_match_for_flight(flights)
         self.solution = []
         self.colors = []
+        self.print_tree = 50
 
         self.nodes = 0
         self.pruned = 0
-        self.pruned_lp = 0
+        self.pruned_l_quick = 0
+        self.pruned_l_lp = 0
+        self.pruned_r_quick = 0
+        self.pruned_r_lp = 0
         self.initSolution = False
+
+        self.precomputed = {}
 
     def draw_tree(self):
         plt.figure(3, figsize=(40, 20))
@@ -79,8 +86,13 @@ class BBVisual:
         x_margin = (x_max - x_min) * 0.80
         plt.xlim(x_min - x_margin, x_max + x_margin)
 
-        nx.draw(self.tree, pos, node_color=self.colors)
-        nx.draw_networkx_labels(self.tree, pos, self.labels, horizontalalignment="center", font_size=15)
+        node_size = 300 / np.log(self.nodes + 2)
+
+        nx.draw(self.tree, pos, node_color=self.colors, node_size=node_size)
+        print("nodes", self.nodes, "pruned", self.pruned)
+        print("LEFT   q_pruned", self.pruned_l_quick, " lp_pruned", self.pruned_l_lp)
+        print("RIGHT  q_pruned", self.pruned_r_quick, " lp_pruned", self.pruned_r_lp)
+        # nx.draw_networkx_labels(self.tree, pos, self.labels, horizontalalignment="center", font_size=15)
         plt.show()
 
     def set_match_for_flight(self, flights: List[IstopFlight]):
@@ -92,9 +104,6 @@ class BBVisual:
                         flight.offers.append(offer)
 
     def run(self):
-        print("reduction***************************************",
-              self.offers[0].reduction + self.offers[15].reduction + self.offers[98].reduction + self.offers[
-                  43].reduction + self.offers[21].reduction)
         self.step([], self.offers, 0)
 
         if len(self.solution) > 0:
@@ -105,21 +114,20 @@ class BBVisual:
     def step(self, solution: List[Offer], offers: list[Offer], reduction: float, parent=None):
         self.nodes += 1
         current_node = self.nodes
-        self.labels[current_node] = get_label(offers[0]) if (len(offers) > 0 and offers[0].num in [0, 15, 98, 43, 21]) \
-            else ""
+        # self.labels[current_node] = get_label(offers[0]) if (len(offers) > 0 and offers[0].num in [0, 15, 98, 43, 21]) \
+        #     else ""
 
-        self.tree.add_node(current_node, color=blue)
+        self.tree.add_node(current_node)
         self.colors.append(blue)
 
         if parent is not None:
             self.tree.add_edge(parent, current_node)
 
-        if self.nodes % 30 == 0:
-            # print("offers", len(offers), "nodes", self.nodes, "pruned", self.pruned, "pruned_lp", self.pruned_lp,
-            #       "reduction", self.best_reduction)
+        if self.nodes % self.print_tree == 0:
             self.draw_tree()
 
         if len(offers) == 0:
+            self.colors[-1] = black
             self.initSolution = True
             return
 
@@ -129,31 +137,32 @@ class BBVisual:
         if l_reduction > self.best_reduction:
             self.solution = l_solution
             self.best_reduction = l_reduction
+            self.colors[-1] = yellow
             print("sol", self.nodes, self.best_reduction, self.solution)
 
         l_incompatible = [offer for flight in offers[0].flights for offer in flight.offers]
         l_offers = [offer for offer in offers[1:] if offer not in l_incompatible]
 
-        # if current_node == 16:
-        #     print("samba")
-        l_lp_bound = self.run_lp(l_offers)
-
-        # print(l_lp_bound + reduction, self.best_reduction)
-
-        if self.initSolution and (l_reduction + sum([offer.reduction for offer in l_offers]) < self.best_reduction or \
-                                  l_reduction + l_lp_bound < self.best_reduction):
-            self.prune(current_node, "LEFT")
+        if self.initSolution:
+            if l_reduction + sum([offer.reduction for offer in l_offers]) < self.best_reduction:
+                self.prune(current_node, "LEFT")
+            else:
+                l_lp_bound = self.run_lp(l_offers)
+                if l_reduction + l_lp_bound < self.best_reduction:
+                    self.prune(current_node, "LEFT", lp=True)
         else:
             self.step(l_solution, l_offers, l_reduction, current_node)
 
         r_offers = offers[1:]
 
-        r_lp_bound = self.run_lp(r_offers)
-
-        if reduction + sum([offer.reduction for offer in r_offers]) < self.best_reduction or \
-                reduction + r_lp_bound < self.best_reduction:
+        if reduction + sum([offer.reduction for offer in r_offers]) < self.best_reduction:
             self.prune(current_node, "RIGHT")
             return
+        else:
+            r_lp_bound = self.run_lp(r_offers)
+            if reduction + r_lp_bound < self.best_reduction:
+                self.prune(current_node, "RIGHT", lp=True)
+                return
 
         self.step(solution, r_offers, reduction, current_node)
 
@@ -241,19 +250,24 @@ class BBVisual:
         final_cost = m.getObjective().getValue()
         return initial_cost - final_cost
 
-    def prune(self, parent, side):
+    def prune(self, parent, side, lp=False):
         self.nodes += 1
         self.pruned += 1
-        self.pruned_lp += 1
+        if side == "LEFT":
+            if not lp:
+                self.pruned_l_quick += 1
+            else:
+                self.pruned_l_lp += 1
+        else:
+            if not lp:
+                self.pruned_r_quick += 1
+            else:
+                self.pruned_r_lp += 1
         self.tree.add_node(self.nodes)
         self.colors.append(green if side == "LEFT" else red)
         self.labels[self.nodes] = ""
         if parent is not None:
             self.tree.add_edge(parent, self.nodes)
 
-        # print(side + " pruned", parent, self.nodes)
-
-        if self.nodes % 30 == 0:
-            # print("nodes", self.nodes, "pruned", self.pruned, "pruned_lp", self.pruned_lp,
-            #       "reduction", self.best_reduction)
+        if self.nodes % self.print_tree == 0:
             self.draw_tree()
