@@ -7,6 +7,12 @@ from Istop.AirlineAndFlight.istopFlight import IstopFlight
 from gurobipy import Model, GRB, quicksum, Env
 
 
+class Node:
+
+    def __init__(self):
+        self.node = None
+
+
 class Offer:
 
     def __init__(self, offer, reduction, num):
@@ -34,7 +40,7 @@ def get_offers_for_flight(flight, r_offers):
     return indexes
 
 
-class BB:
+class BBVisual:
 
     def __init__(self, offers, reductions, flights: List[IstopFlight]):
 

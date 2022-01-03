@@ -1,0 +1,17 @@
+bb reduction  5089.290327423724
+solution
+
+[array([SAS67, SAS57], dtype=object), array([NAX40, NAX71], dtype=object)]
+[array([SAS52, SAS64], dtype=object), array([IBK36, IBK51], dtype=object)]
+[array([IBK18, IBK24], dtype=object), array([JTG9, JTG26], dtype=object)]
+[array([SAS15, SAS59], dtype=object), array([IBK20, IBK44], dtype=object)]
+[array([SAS11, SAS75], dtype=object), array([IBK17, IBK74], dtype=object)]
+
+gurobi solution
+[array([SAS10, SAS59], dtype=object), array([IBK17, IBK44], dtype=object)]
+[array([SAS15, SAS64], dtype=object), array([IBK20, IBK51], dtype=object)]
+[array([SAS67, SAS57], dtype=object), array([NAX40, NAX71], dtype=object)]
+[array([SAS52, SAS46], dtype=object), array([FIN39, FIN41], dtype=object)]
+[array([IBK18, IBK24], dtype=object), array([JTG9, JTG26], dtype=object)]
+Number of offers selected:  5
+reduction 5386.20292667055

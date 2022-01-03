@@ -3,6 +3,7 @@ from typing import Callable, Union, List
 from GlobalFuns.globalFuns import HiddenPrints
 from Istop.AirlineAndFlight.istopFlight import IstopFlight
 from Istop.Solvers.bb import BB
+from Istop.Solvers.bb_visual import BBVisual
 from Istop.Solvers.gurobySolver import GurobiSolver
 # from Istop.Solvers.mip_solver import MipSolver
 # from Istop.Solvers.xpress_solver import XpressSolver
@@ -97,7 +98,7 @@ class Istop(mS.ModelStructure):
     def run(self, max_time=120, timing=False, verbose=False, branching=False):
         feasible = self.check_and_set_matches()
 
-        bb = BB(offers=self.matches, reductions=self.reductions, flights=self.flights)
+        bb = BBVisual(offers=self.matches, reductions=self.reductions, flights=self.flights)
         bb.run()
 
         print("bb sol len ", len(bb.solution))
