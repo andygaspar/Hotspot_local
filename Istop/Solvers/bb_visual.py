@@ -149,15 +149,7 @@ class BBVisual:
                 self.prune(current_node, "LEFT")
                 pruned = True
             else:
-                l_lp_bound, sol = self.run_lp(l_offers, l_reduction, self.best_reduction)
-                if sol is not None:
-                    l_solution += sol
-                    l_reduction += l_lp_bound
-                    self.update_sol(l_solution, l_reduction, from_mip=True, parent=current_node)
-                    pruned = True
-                elif l_reduction + l_lp_bound < self.best_reduction:
-                    self.prune(current_node, "LEFT", lp=True)
-                    pruned = True
+                pruned = self.run_and_check_lp(l_offers, l_reduction, current_node, l_solution, "LEFT")
         if not pruned:
             self.step(l_solution, l_offers, l_reduction, current_node)
 
@@ -167,17 +159,25 @@ class BBVisual:
             self.prune(current_node, "RIGHT")
             return
         else:
-            r_lp_bound, sol = self.run_lp(r_offers, reduction, self.best_reduction)
-            if sol is not None:
-                solution += sol
-                self.update_sol(solution, r_lp_bound, from_mip=True, parent=current_node)
-                print("kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk")
-                return
-            elif reduction + r_lp_bound < self.best_reduction:
-                self.prune(current_node, "RIGHT", lp=True)
-                return
+            pruned = self.run_and_check_lp(r_offers, reduction, current_node, solution, "RIGHT")
 
-        self.step(solution, r_offers, reduction, current_node)
+        if not pruned:
+            self.step(solution, r_offers, reduction, current_node)
+
+    def run_and_check_lp(self, offers, reduction, current_node, solution, side):
+        pruned = False
+        lp_bound, sol = self.run_lp(offers, reduction, self.best_reduction)
+        if sol is not None:
+            solution += sol
+            reduction += lp_bound
+            self.update_sol(solution, reduction, from_mip=True, parent=current_node)
+            print("kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk")
+            pruned = True
+        elif reduction + lp_bound < self.best_reduction:
+            self.prune(current_node, side, lp=True)
+            pruned = True
+
+        return pruned
 
     def prune(self, parent, side, lp=False):
         self.nodes += 1
