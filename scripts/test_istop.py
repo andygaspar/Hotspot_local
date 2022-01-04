@@ -48,5 +48,5 @@ for i in range(3):
 
         print("istop")
         istop = Istop(slot_list, fl_list)
-        istop.run(timing=True, verbose=False, branching=True)
+        istop.run(timing=True, verbose=True, branching=True)
         # istop.print_performance()

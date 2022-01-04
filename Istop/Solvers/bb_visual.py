@@ -67,7 +67,7 @@ class BBVisual:
         self.set_match_for_flight(flights)
         self.solution = []
         self.colors = []
-        self.print_tree = 50
+        self.print_tree = 40
 
         self.nodes = 0
         self.pruned = 0
@@ -79,23 +79,24 @@ class BBVisual:
 
         self.precomputed = {}
 
-    def draw_tree(self):
-        plt.figure(3, figsize=(40, 20))
-        pos = graphviz_layout(self.tree, prog='dot')
-        x_values, y_values = zip(*pos.values())
-        x_max = max(x_values)
-        x_min = min(x_values)
-        x_margin = (x_max - x_min) * 0.80
-        plt.xlim(x_min - x_margin, x_max + x_margin)
+    def draw_tree(self, is_final=False):
+        if self.nodes % self.print_tree == 0 or is_final:
+            plt.figure(3, figsize=(40, 20))
+            pos = graphviz_layout(self.tree, prog='dot')
+            x_values, y_values = zip(*pos.values())
+            x_max = max(x_values)
+            x_min = min(x_values)
+            x_margin = (x_max - x_min) * 0.80
+            plt.xlim(x_min - x_margin, x_max + x_margin)
 
-        node_size = 300 / np.log(self.nodes + 2)
+            node_size = 300 / np.log(self.nodes + 2)
 
-        nx.draw(self.tree, pos, node_color=self.colors, node_size=node_size)
-        print("nodes", self.nodes, "pruned", self.pruned)
-        print("LEFT   q_pruned", self.pruned_l_quick, " lp_pruned", self.pruned_l_lp)
-        print("RIGHT  q_pruned", self.pruned_r_quick, " lp_pruned", self.pruned_r_lp)
-        # nx.draw_networkx_labels(self.tree, pos, self.labels, horizontalalignment="center", font_size=15)
-        plt.show()
+            nx.draw(self.tree, pos, node_color=self.colors, node_size=node_size)
+            print("nodes", self.nodes, "pruned", self.pruned)
+            print("LEFT   q_pruned", self.pruned_l_quick, " lp_pruned", self.pruned_l_lp)
+            print("RIGHT  q_pruned", self.pruned_r_quick, " lp_pruned", self.pruned_r_lp)
+            # nx.draw_networkx_labels(self.tree, pos, self.labels, horizontalalignment="center", font_size=15)
+            plt.show()
 
     def set_match_for_flight(self, flights: List[IstopFlight]):
         for flight in flights:
@@ -111,7 +112,7 @@ class BBVisual:
         if len(self.solution) > 0:
             self.solution = [offer.offer for offer in self.solution]
 
-        self.draw_tree()
+        self.draw_tree(is_final=True)
 
     def step(self, solution: List[Offer], offers: list[Offer], reduction: float, parent=None):
         print(self.nodes)
@@ -126,8 +127,7 @@ class BBVisual:
         if parent is not None:
             self.tree.add_edge(parent, current_node)
 
-        if self.nodes % self.print_tree == 0:
-            self.draw_tree()
+        self.draw_tree()
 
         if len(offers) == 0:
             self.colors[-1] = black
@@ -149,14 +149,14 @@ class BBVisual:
                 self.prune(current_node, "LEFT")
                 pruned = True
             else:
-                l_lp_bound, sol = self.run_lp(l_offers)
-                if l_reduction + l_lp_bound < self.best_reduction:
-                    if sol is not None:
-                        leaf_sol = self.get_mip_sol(sol, l_offers)
-                        l_solution += leaf_sol
-                        self.update_sol(l_solution, l_lp_bound, from_mip=True)
-                    else:
-                        self.prune(current_node, "LEFT", lp=True)
+                l_lp_bound, sol = self.run_lp(l_offers, l_reduction, self.best_reduction)
+                if sol is not None:
+                    l_solution += sol
+                    l_reduction += l_lp_bound
+                    self.update_sol(l_solution, l_reduction, from_mip=True, parent=current_node)
+                    pruned = True
+                elif l_reduction + l_lp_bound < self.best_reduction:
+                    self.prune(current_node, "LEFT", lp=True)
                     pruned = True
         if not pruned:
             self.step(l_solution, l_offers, l_reduction, current_node)
@@ -167,15 +167,14 @@ class BBVisual:
             self.prune(current_node, "RIGHT")
             return
         else:
-            r_lp_bound, sol = self.run_lp(r_offers)
-            if reduction + r_lp_bound < self.best_reduction:
-                if sol is not None:
-                    leaf_sol = self.get_mip_sol(sol, r_offers)
-                    solution += leaf_sol
-                    self.update_sol(l_solution, r_lp_bound, from_mip=True)
-                    return
-                else:
-                    self.prune(current_node, "RIGHT", lp=True)
+            r_lp_bound, sol = self.run_lp(r_offers, reduction, self.best_reduction)
+            if sol is not None:
+                solution += sol
+                self.update_sol(solution, r_lp_bound, from_mip=True, parent=current_node)
+                print("kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk")
+                return
+            elif reduction + r_lp_bound < self.best_reduction:
+                self.prune(current_node, "RIGHT", lp=True)
                 return
 
         self.step(solution, r_offers, reduction, current_node)
@@ -195,28 +194,25 @@ class BBVisual:
                 self.pruned_r_lp += 1
         self.tree.add_node(self.nodes)
         self.colors.append(green if side == "LEFT" else red)
-        self.labels[self.nodes] = ""
         if parent is not None:
             self.tree.add_edge(parent, self.nodes)
+        self.draw_tree()
 
-        if self.nodes % self.print_tree == 0:
-            self.draw_tree()
-
-    def update_sol(self, solution, reduction, from_mip=False):
+    def update_sol(self, solution, reduction, from_mip=False, parent=None):
         self.solution = solution
         self.best_reduction = reduction
-        self.colors[-1] = yellow if not from_mip else orange
+        if from_mip:
+            self.nodes += 1
+            self.tree.add_node(self.nodes)
+            self.colors.append(orange)
+            if parent is not None:
+                self.tree.add_edge(parent, self.nodes)
+        else:
+            self.colors[-1] = yellow
         print("sol", self.nodes, self.best_reduction, self.solution, 'mip' if from_mip else 'leaf')
+        self.draw_tree()
 
-    @staticmethod
-    def get_mip_sol(sol, offers):
-        solution = []
-        for i in range(len(offers)):
-            if sol[i].x > 0.5:
-                solution.append(offers[i])
-        return solution
-
-    def run_lp(self, offers_):
+    def run_lp(self, offers_, reduction, best_reduction):
 
         t = time.time()
 
@@ -236,7 +232,7 @@ class BBVisual:
         m.modelSense = GRB.MINIMIZE
         m.setParam('OutputFlag', 0)
 
-        var_type = GRB.BINARY if len(offers_) <= 40 else GRB.CONTINUOUS
+        var_type = GRB.BINARY if len(offers_) <= 60 else GRB.CONTINUOUS
         var = "binary" if var_type == GRB.BINARY else "continuous"
 
         x = m.addVars([(i, j) for i in range(len(flights)) for j in range(len(flights))], vtype=var_type, lb=0, ub=1)
@@ -303,8 +299,16 @@ class BBVisual:
         initial_cost = sum([flight.cost_fun(flight.slot) for flight in flights])
         final_cost = m.getObjective().getValue()
 
-        solution = None if var == "binary" else c
+        branch_reduction = initial_cost - final_cost
 
-        return initial_cost - final_cost, solution
+        if var == "binary" and reduction + branch_reduction > best_reduction:
+            solution = []
+            for i in range(len(offers_)):
+                if c[i].x > 0.5:
+                    solution.append(offers_[i])
+        else:
+            solution = None
+
+        return branch_reduction, solution
 
 
