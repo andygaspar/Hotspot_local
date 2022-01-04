@@ -50,6 +50,16 @@ def get_label(offer: Offer):
     return " ".join(flights[:2]) + "\n" + " ".join(flights[2:])
 
 
+def stop(model, where):
+
+    if where == GRB.Callback.MIP:
+        objbnd = model.cbGet(GRB.Callback.MIP_OBJBND)
+
+        if model._reduction + model._initial_cost - objbnd < model._best_reduction:
+            print("stopped ******************", model._side)
+            model.terminate()
+
+
 class BBVisual:
 
     def __init__(self, offers, reductions, flights: List[IstopFlight]):
@@ -67,7 +77,7 @@ class BBVisual:
         self.set_match_for_flight(flights)
         self.solution = []
         self.colors = []
-        self.print_tree = 40
+        self.print_tree = 100
 
         self.nodes = 0
         self.pruned = 0
@@ -92,7 +102,8 @@ class BBVisual:
             node_size = 300 / np.log(self.nodes + 2)
 
             nx.draw(self.tree, pos, node_color=self.colors, node_size=node_size)
-            print("nodes", self.nodes, "pruned", self.pruned)
+            print("nodes", self.nodes, "pruned", self.pruned, "len sol", len(self.solution),
+                  "reduciton", self.best_reduction)
             print("LEFT   q_pruned", self.pruned_l_quick, " lp_pruned", self.pruned_l_lp)
             print("RIGHT  q_pruned", self.pruned_r_quick, " lp_pruned", self.pruned_r_lp)
             # nx.draw_networkx_labels(self.tree, pos, self.labels, horizontalalignment="center", font_size=15)
@@ -118,8 +129,6 @@ class BBVisual:
         print(self.nodes)
         self.nodes += 1
         current_node = self.nodes
-        # self.labels[current_node] = get_label(offers[0]) if (len(offers) > 0 and offers[0].num in [0, 15, 98, 43, 21]) \
-        #     else ""
 
         self.tree.add_node(current_node)
         self.colors.append(blue)
@@ -166,7 +175,7 @@ class BBVisual:
 
     def run_and_check_lp(self, offers, reduction, current_node, solution, side):
         pruned = False
-        lp_bound, sol = self.run_lp(offers, reduction, self.best_reduction)
+        lp_bound, sol = self.run_lp(offers, reduction, self.best_reduction, side)
         if sol is not None:
             solution += sol
             reduction += lp_bound
@@ -212,7 +221,9 @@ class BBVisual:
         print("sol", self.nodes, self.best_reduction, self.solution, 'mip' if from_mip else 'leaf')
         self.draw_tree()
 
-    def run_lp(self, offers_, reduction, best_reduction):
+
+
+    def run_lp(self, offers_, reduction, best_reduction, side):
 
         t = time.time()
 
@@ -231,12 +242,14 @@ class BBVisual:
         m = Model('CVRP')
         m.modelSense = GRB.MINIMIZE
         m.setParam('OutputFlag', 0)
+        if len(offers_) > 50:
+            m.setParam('TimeLimit', 1 if side == "LEFT" else 0.2)
 
-        var_type = GRB.BINARY if len(offers_) <= 60 else GRB.CONTINUOUS
-        var = "binary" if var_type == GRB.BINARY else "continuous"
+        # var_type = GRB.BINARY if len(offers_) <= 60 else GRB.CONTINUOUS
+        # var = "binary" if var_type == GRB.BINARY else "continuous"
 
-        x = m.addVars([(i, j) for i in range(len(flights)) for j in range(len(flights))], vtype=var_type, lb=0, ub=1)
-        c = m.addVars([i for i in range(len(offers_))], vtype=var_type, lb=0, ub=1)
+        x = m.addVars([(i, j) for i in range(len(flights)) for j in range(len(flights))], vtype=GRB.BINARY, lb=0, ub=1)
+        c = m.addVars([i for i in range(len(offers_))], vtype=GRB.BINARY, lb=0, ub=1)
 
         for flight in flights:
             m.addConstr(
@@ -292,16 +305,23 @@ class BBVisual:
                      for flight in flights for slot in slots)
         )
 
-        m.optimize()
-
-        print(var, len(offers_), time.time() - t)
-
         initial_cost = sum([flight.cost_fun(flight.slot) for flight in flights])
-        final_cost = m.getObjective().getValue()
+        m._initial_cost = initial_cost
+        m._reduction = reduction
+        m._best_reduction = best_reduction
+        m._side = side
+        m.optimize(stop)
 
-        branch_reduction = initial_cost - final_cost
+        branch_reduction = initial_cost - m.ObjBound
 
-        if var == "binary" and reduction + branch_reduction > best_reduction:
+        status = "OPTIMAL" if (m.status == 2 and reduction + branch_reduction > best_reduction) \
+            else "bound" if m.status != 2 else "OPT_bound"
+
+        print(status, len(offers_), time.time() - t,
+              reduction + branch_reduction, best_reduction, side)
+        # final_cost = m.getObjective().getValue()
+
+        if m.status == 2 and reduction + branch_reduction > best_reduction:
             solution = []
             for i in range(len(offers_)):
                 if c[i].x > 0.5:
