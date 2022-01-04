@@ -222,7 +222,6 @@ class BBVisual:
         self.draw_tree()
 
 
-
     def run_lp(self, offers_, reduction, best_reduction, side):
 
         t = time.time()
@@ -242,7 +241,7 @@ class BBVisual:
         m = Model('CVRP')
         m.modelSense = GRB.MINIMIZE
         m.setParam('OutputFlag', 0)
-        if len(offers_) > 50:
+        if len(offers_) > 70:
             m.setParam('TimeLimit', 1 if side == "LEFT" else 0.2)
 
         # var_type = GRB.BINARY if len(offers_) <= 60 else GRB.CONTINUOUS
