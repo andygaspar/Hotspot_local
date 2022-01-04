@@ -1,4 +1,5 @@
 import sys
+import time
 from typing import List
 
 import numpy as np
@@ -14,6 +15,7 @@ blue = "#1f78b4"
 green = "#008000"
 red = "#FF0000"
 yellow = "#FFFF00"
+orange = "#FFA500"
 
 
 class Offer:
@@ -112,6 +114,7 @@ class BBVisual:
         self.draw_tree()
 
     def step(self, solution: List[Offer], offers: list[Offer], reduction: float, parent=None):
+        print(self.nodes)
         self.nodes += 1
         current_node = self.nodes
         # self.labels[current_node] = get_label(offers[0]) if (len(offers) > 0 and offers[0].num in [0, 15, 98, 43, 21]) \
@@ -135,22 +138,27 @@ class BBVisual:
         l_solution = solution + [offers[0]]
 
         if l_reduction > self.best_reduction:
-            self.solution = l_solution
-            self.best_reduction = l_reduction
-            self.colors[-1] = yellow
-            print("sol", self.nodes, self.best_reduction, self.solution)
+            self.update_sol(l_solution, l_reduction, from_mip=False)
 
         l_incompatible = [offer for flight in offers[0].flights for offer in flight.offers]
         l_offers = [offer for offer in offers[1:] if offer not in l_incompatible]
 
+        pruned = False
         if self.initSolution:
             if l_reduction + sum([offer.reduction for offer in l_offers]) < self.best_reduction:
                 self.prune(current_node, "LEFT")
+                pruned = True
             else:
-                l_lp_bound = self.run_lp(l_offers)
+                l_lp_bound, sol = self.run_lp(l_offers)
                 if l_reduction + l_lp_bound < self.best_reduction:
-                    self.prune(current_node, "LEFT", lp=True)
-        else:
+                    if sol is not None:
+                        leaf_sol = self.get_mip_sol(sol, l_offers)
+                        l_solution += leaf_sol
+                        self.update_sol(l_solution, l_lp_bound, from_mip=True)
+                    else:
+                        self.prune(current_node, "LEFT", lp=True)
+                    pruned = True
+        if not pruned:
             self.step(l_solution, l_offers, l_reduction, current_node)
 
         r_offers = offers[1:]
@@ -159,17 +167,61 @@ class BBVisual:
             self.prune(current_node, "RIGHT")
             return
         else:
-            r_lp_bound = self.run_lp(r_offers)
+            r_lp_bound, sol = self.run_lp(r_offers)
             if reduction + r_lp_bound < self.best_reduction:
-                self.prune(current_node, "RIGHT", lp=True)
+                if sol is not None:
+                    leaf_sol = self.get_mip_sol(sol, r_offers)
+                    solution += leaf_sol
+                    self.update_sol(l_solution, r_lp_bound, from_mip=True)
+                    return
+                else:
+                    self.prune(current_node, "RIGHT", lp=True)
                 return
 
         self.step(solution, r_offers, reduction, current_node)
 
-    def run_lp(self, r_offers):
+    def prune(self, parent, side, lp=False):
+        self.nodes += 1
+        self.pruned += 1
+        if side == "LEFT":
+            if not lp:
+                self.pruned_l_quick += 1
+            else:
+                self.pruned_l_lp += 1
+        else:
+            if not lp:
+                self.pruned_r_quick += 1
+            else:
+                self.pruned_r_lp += 1
+        self.tree.add_node(self.nodes)
+        self.colors.append(green if side == "LEFT" else red)
+        self.labels[self.nodes] = ""
+        if parent is not None:
+            self.tree.add_edge(parent, self.nodes)
+
+        if self.nodes % self.print_tree == 0:
+            self.draw_tree()
+
+    def update_sol(self, solution, reduction, from_mip=False):
+        self.solution = solution
+        self.best_reduction = reduction
+        self.colors[-1] = yellow if not from_mip else orange
+        print("sol", self.nodes, self.best_reduction, self.solution, 'mip' if from_mip else 'leaf')
+
+    @staticmethod
+    def get_mip_sol(sol, offers):
+        solution = []
+        for i in range(len(offers)):
+            if sol[i].x > 0.5:
+                solution.append(offers[i])
+        return solution
+
+    def run_lp(self, offers_):
+
+        t = time.time()
 
         flights = []
-        for offer in r_offers:
+        for offer in offers_:
             match = offer.offer
             for couple in match:
                 for fl in couple:
@@ -184,11 +236,11 @@ class BBVisual:
         m.modelSense = GRB.MINIMIZE
         m.setParam('OutputFlag', 0)
 
-        var_type = GRB.BINARY if len(r_offers) < 60 else GRB.CONTINUOUS
+        var_type = GRB.BINARY if len(offers_) <= 40 else GRB.CONTINUOUS
+        var = "binary" if var_type == GRB.BINARY else "continuous"
 
-        x = m.addVars([(i, j) for i in range(len(flights)) for j in range(len(flights))], vtype=GRB.BINARY, lb=0,
-                      ub=1)
-        c = m.addVars([i for i in range(len(r_offers))], vtype=var_type, lb=0, ub=1)
+        x = m.addVars([(i, j) for i in range(len(flights)) for j in range(len(flights))], vtype=var_type, lb=0, ub=1)
+        c = m.addVars([i for i in range(len(offers_))], vtype=var_type, lb=0, ub=1)
 
         for flight in flights:
             m.addConstr(
@@ -217,14 +269,14 @@ class BBVisual:
             m.addConstr(
                 quicksum(x[flight_index[flight], slot_index[slot]]
                          for slot in slots if slot != flight.slot) \
-                <= quicksum([c[j] for j in get_offers_for_flight(flight, r_offers)])
+                <= quicksum([c[j] for j in get_offers_for_flight(flight, offers_)])
             )
 
-            m.addConstr(quicksum([c[j] for j in get_offers_for_flight(flight, r_offers)]) <= 1)
+            m.addConstr(quicksum([c[j] for j in get_offers_for_flight(flight, offers_)]) <= 1)
 
         epsilon = sys.float_info.min
 
-        for k, offer in enumerate(r_offers):
+        for k, offer in enumerate(offers_):
             match = offer.offer
             fls = [flight for pair in match for flight in pair]
             m.addConstr(quicksum(quicksum(x[flight_index[i], flight_index[j]] for i in pair for j in fls)
@@ -246,28 +298,13 @@ class BBVisual:
 
         m.optimize()
 
+        print(var, len(offers_), time.time() - t)
+
         initial_cost = sum([flight.cost_fun(flight.slot) for flight in flights])
         final_cost = m.getObjective().getValue()
-        return initial_cost - final_cost
 
-    def prune(self, parent, side, lp=False):
-        self.nodes += 1
-        self.pruned += 1
-        if side == "LEFT":
-            if not lp:
-                self.pruned_l_quick += 1
-            else:
-                self.pruned_l_lp += 1
-        else:
-            if not lp:
-                self.pruned_r_quick += 1
-            else:
-                self.pruned_r_lp += 1
-        self.tree.add_node(self.nodes)
-        self.colors.append(green if side == "LEFT" else red)
-        self.labels[self.nodes] = ""
-        if parent is not None:
-            self.tree.add_edge(parent, self.nodes)
+        solution = None if var == "binary" else c
 
-        if self.nodes % self.print_tree == 0:
-            self.draw_tree()
+        return initial_cost - final_cost, solution
+
+
