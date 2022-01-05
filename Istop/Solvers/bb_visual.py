@@ -122,30 +122,25 @@ class BBVisual:
     def draw_tree(self, is_final=False):
         import _tkinter
         if self.nodes % self.print_tree == 0 or is_final:
-            try:
-                # plt.figure(3, figsize=(40, 20))
-                plt.cla()
-                pos = graphviz_layout(self.tree, prog='dot')
-                x_values, y_values = zip(*pos.values())
-                x_max = max(x_values)
-                x_min = min(x_values)
-                x_margin = (x_max - x_min) * 0.80
-                plt.xlim(x_min - x_margin, x_max + x_margin)
+            plt.cla()
+            pos = graphviz_layout(self.tree, prog='dot')
+            x_values, y_values = zip(*pos.values())
+            x_max = max(x_values)
+            x_min = min(x_values)
+            x_margin = (x_max - x_min) * 0.80
+            plt.xlim(x_min - x_margin, x_max + x_margin)
 
-                node_size = 300 / np.log(self.nodes + 2)
+            node_size = 300 / np.log(self.nodes + 2)
 
-                nx.draw(self.tree, pos, node_color=self.colors, node_size=node_size)
-                print("nodes", self.nodes, "pruned", self.pruned, "len sol", len(self.solution),
-                      "reduciton", self.best_reduction)
-                print("LEFT   q_pruned", self.pruned_l_quick, " lp_pruned", self.pruned_l_lp)
-                print("RIGHT  q_pruned", self.pruned_r_quick, " lp_pruned", self.pruned_r_lp)
-                # nx.draw_networkx_labels(self.tree, pos, self.labels, horizontalalignment="center", font_size=15)
-                self.fig.canvas.draw()
-                self.fig.canvas.flush_events()
+            nx.draw(self.tree, pos, node_color=self.colors, node_size=node_size)
+            print("nodes", self.nodes, "pruned", self.pruned, "len sol", len(self.solution),
+                  "reduciton", self.best_reduction)
+            print("LEFT   q_pruned", self.pruned_l_quick, " lp_pruned", self.pruned_l_lp)
+            print("RIGHT  q_pruned", self.pruned_r_quick, " lp_pruned", self.pruned_r_lp)
+            # nx.draw_networkx_labels(self.tree, pos, self.labels, horizontalalignment="center", font_size=15)
+            self.fig.canvas.draw()
+            self.fig.canvas.flush_events()
 
-            except _tkinter.TclError:
-                self.fig = plt.figure("B&B Tree", figsize=(40, 20))  # Create a figure
-                self.ax = self.fig.add_subplot(111)
 
     def set_match_for_flight(self, flights: List[IstopFlight]):
         for flight in flights:
