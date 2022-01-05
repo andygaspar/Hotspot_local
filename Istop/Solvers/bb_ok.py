@@ -12,25 +12,12 @@ from gurobipy import Model, GRB, quicksum, Env
 import networkx as nx
 from networkx.drawing.nx_agraph import write_dot, graphviz_layout
 
-# from Istop.Solvers.tree_visual import Visual
-#
-
-black = "#000000"
-blue = "#1f78b4"
-green = "#008000"
-red = "#FF0000"
-yellow = "#FFFF00"
-orange = "#FFA500"
-pink = '#FF69B4'
-
-
 
 class Precomputed:
     def __init__(self, offers):
         self.offers = [offer.num for offer in offers]
         self.key = ".".join([str(offer.num) for offer in self.offers])
         self.lb = None
-
 
 
 class Offer:
