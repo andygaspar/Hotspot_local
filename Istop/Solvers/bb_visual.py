@@ -75,7 +75,7 @@ def stop(model, where):
 
 class BBVisual:
 
-    def __init__(self, offers, reductions, flights: List[IstopFlight]):
+    def __init__(self, offers, reductions, flights: List[IstopFlight], min_lp_len=80, max_lp_time=10, print_info=100):
 
         candidates = ["macosx", "qt5agg", "gtk3agg", "tkagg", "wxagg"]
         for candidate in candidates:
@@ -99,7 +99,7 @@ class BBVisual:
         self.set_match_for_flight(flights)
         self.solution = []
         self.colors = []
-        self.print_tree = 10
+        self.print_tree = 200
 
         self.nodes = 0
         self.pruned = 0
@@ -112,15 +112,14 @@ class BBVisual:
         self.fig = plt.figure("B&B Tree", figsize=(40, 20))  # Create a figure
         self.ax = self.fig.add_subplot(111)
 
-        self.min_lp_len = 80
-        self.max_time = 10
+        self.min_lp_len = min_lp_len
+        self.max_time = max_lp_time
 
         self.precomputed = {}
 
         self.stored = 0
 
     def draw_tree(self, is_final=False):
-        import _tkinter
         if self.nodes % self.print_tree == 0 or is_final:
             plt.cla()
             pos = graphviz_layout(self.tree, prog='dot')
@@ -141,7 +140,6 @@ class BBVisual:
             self.fig.canvas.draw()
             self.fig.canvas.flush_events()
 
-
     def set_match_for_flight(self, flights: List[IstopFlight]):
         for flight in flights:
             for offer in self.offers:
@@ -161,7 +159,7 @@ class BBVisual:
         matplotlib.use('module://backend_interagg')
 
     def step(self, solution: List[Offer], offers: list[Offer], reduction: float, parent=None):
-        if self.nodes % 20 == 0:
+        if self.nodes % 100 == 0:
             print(self.nodes, len(self.precomputed), self.stored)
         self.nodes += 1
         current_node = self.nodes
@@ -214,7 +212,6 @@ class BBVisual:
         offers_key = ".".join([str(offer.num) for offer in offers])
         if offers_key in self.precomputed.keys():
             if self.precomputed[offers_key] + reduction < self.best_reduction:
-                print("kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk")
                 self.stored += 1
                 self.prune(current_node, side, precomputed=True)
                 pruned = True
@@ -265,7 +262,7 @@ class BBVisual:
                 self.tree.add_edge(parent, self.nodes)
         else:
             self.colors[-1] = yellow
-        print("sol", self.nodes, self.best_reduction, self.solution, 'mip' if from_mip else 'leaf')
+        # print("sol", self.nodes, self.best_reduction, self.solution, 'mip' if from_mip else 'leaf')
         self.draw_tree()
 
 

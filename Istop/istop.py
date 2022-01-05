@@ -2,6 +2,7 @@ from typing import List
 
 from Istop.AirlineAndFlight.istopFlight import IstopFlight
 from Istop.Solvers.bb import BB
+from Istop.Solvers.bb_visual import BBVisual
 from Istop.Solvers.gurobySolver import GurobiSolver
 # from Istop.Solvers.mip_solver import MipSolver
 # from Istop.Solvers.xpress_solver import XpressSolver
@@ -95,33 +96,24 @@ class Istop(mS.ModelStructure):
 
     def run(self, max_time=120, timing=False, verbose=False, branching=False):
         feasible = self.check_and_set_matches()
-
+        print("start")
         t = time.time()
-        bb = BB(offers=self.matches, reductions=self.reductions, flights=self.flights)
+        bb = BBVisual(offers=self.matches, reductions=self.reductions, flights=self.flights, min_lp_len=5)
         bb.run()
         print("time alg", time.time() - t)
-        print('lp time', bb.lp_time)
+        # print('lp time', bb.lp_time)
 
         print("bb sol len ", len(bb.solution))
         print("bb reduction ", bb.best_reduction)
         print("solution \n")
-        for offer in bb.solution:
-            print(offer)
+        # for offer in bb.solution:
+        #     print(offer)
 
         if feasible:
             t = time.time()
             self.problem = GurobiSolver(self)
             solution_vect, offers_vect = self.problem.run(timing=timing, verbose=verbose, branching=branching)
             print("time Gurobi", time.time()-t)
-            # try:
-            #
-            #     self.problem = XpressSolver(self, max_time)
-            #     solution_vect, offers_vect = self.problem.run(timing=timing)
-            #
-            # except:
-            #     print("using MIP")
-            #     self.problem = MipSolver(self, max_time)
-            #     solution_vect, offers_vect = self.problem.run(timing=timing)
 
             self.assign_flights(solution_vect)
 
@@ -130,7 +122,7 @@ class Istop(mS.ModelStructure):
             for i in range(len(self.matches)):
                 if offers_vect[i] > 0.9:
                     self.offers_selected.append(self.matches[i])
-                    print(self.matches[i])
+                    # print(self.matches[i])
                     offers += 1
             print("Number of offers selected: ", offers)
             print("reduction", self.initialTotalCosts - self.problem.m.getObjective().getValue())

@@ -153,12 +153,12 @@ class BB:
             self.prune("RIGHT")
             pruned = True
         else:
-            pruned = self.run_and_check_lp(r_offers, reduction, current_node, solution, "RIGHT")
+            pruned = self.run_and_check_lp(r_offers, reduction, solution, "RIGHT")
 
         if not pruned:
             self.step(solution, r_offers, reduction, current_node)
 
-    def run_and_check_lp(self, offers, reduction, current_node, solution, side):
+    def run_and_check_lp(self, offers, reduction, solution, side):
         pruned = False
         offers_key = ".".join([str(offer.num) for offer in offers])
         if offers_key in self.precomputed.keys():

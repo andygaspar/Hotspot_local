@@ -25,18 +25,18 @@ schedule_maker = df_to_schedule.RealisticSchedule()
 n_flights = 120
 c_reduction = 0.5
 
-n_flights = 80
+n_flights = 100
 
 
 
 
-for i in range(3):
+for i in range(10):
 
     print(i, "++****************************************************")
     slot_list, fl_list, airport = schedule_maker.make_sl_fl_from_data(n_flights=n_flights,
                                                                       capacity_reduction=c_reduction,
                                                                       compute=True)
-    if i == 2:
+    if i == 4:
         print(airport)
         udpp_model = UDPPmodel(slot_list, fl_list, hfes=0)
         t = time.time()
