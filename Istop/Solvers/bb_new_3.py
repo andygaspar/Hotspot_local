@@ -44,7 +44,7 @@ class BB_new_3(BB):
         self.nodes += 1
         if len(offers) == 0:
             self.initSolution = True
-            return 0
+            return
 
         l_reduction = reduction + offers[0].reduction
         l_solution = solution + [offers[0]]
