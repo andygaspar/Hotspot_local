@@ -4,6 +4,7 @@ from typing import List
 
 import numpy as np
 import matplotlib
+from _distutils_hack import override
 from matplotlib import pyplot as plt
 
 
@@ -12,8 +13,9 @@ from gurobipy import Model, GRB, quicksum, Env
 import networkx as nx
 from networkx.drawing.nx_agraph import write_dot, graphviz_layout
 
-# from Istop.Solvers.tree_visual import Visual
-#
+from Istop.Solvers.bb import BB, Offer
+from Istop.Solvers import bb
+from Istop.old.bb_old import get_offers_for_flight
 
 black = "#000000"
 blue = "#1f78b4"
@@ -24,59 +26,13 @@ orange = "#FFA500"
 pink = '#FF69B4'
 
 
+stop = bb.stop
 
-class Precomputed:
-    def __init__(self, offers):
-        self.offers = [offer.num for offer in offers]
-        self.key = ".".join([str(offer.num) for offer in self.offers])
-        self.lb = None
+class BBVisual(BB):
 
-
-
-class Offer:
-    def __init__(self, offer, reduction, num):
-        self.offer = offer
-        self.reduction = reduction
-        self.flights = [flight for couple in offer for flight in couple]
-        self.num = num
-
-    def __repr__(self):
-        return str(self.num) + " " + ' '.join([f.name for f in self.flights])
-
-    def __eq__(self, other):
-        return self.num == other.num
-
-
-def get_offers_for_flight(flight, r_offers):
-    j = 0
-    indexes = []
-    for offer in r_offers:
-        match = offer.offer
-        for couple in match:
-            if flight.slot == couple[0].slot or flight.slot == couple[1].slot:
-                indexes.append(j)
-        j += 1
-    return indexes
-
-
-def get_label(offer: Offer):
-    flights = [flight.name for flight in offer.flights]
-    return " ".join(flights[:2]) + "\n" + " ".join(flights[2:])
-
-
-def stop(model, where):
-
-    if where == GRB.Callback.MIP:
-        objbnd = model.cbGet(GRB.Callback.MIP_OBJBND)
-
-        if model._reduction + model._initial_cost - objbnd < model._best_reduction:
-            model.terminate()
-
-
-class BBVisual:
-
-    def __init__(self, offers, reductions, flights: List[IstopFlight], min_lp_len=80, max_lp_time=10, print_info=100):
-
+    def __init__(self, offers, reductions, flights: List[IstopFlight], min_lp_len=80, max_lp_time=10,
+                 print_tree=200, print_info=100):
+        super().__init__(offers, reductions, flights, min_lp_len, max_lp_time, print_info)
         candidates = ["macosx", "qt5agg", "gtk3agg", "tkagg", "wxagg"]
         for candidate in candidates:
             try:
@@ -86,38 +42,15 @@ class BBVisual:
             except (ImportError, ModuleNotFoundError):
                 pass
 
-        self.tree = None
-        self.best_reduction = 0
-        self.best_bound = 0
-
         self.tree = nx.Graph()
         self.labels = {}
 
-        order = np.flip(np.argsort(reductions))
-        self.offers = [Offer(offers[j], reductions[j], i) for i, j in enumerate(order)]
-
-        self.set_match_for_flight(flights)
-        self.solution = []
+        self.print_tree = print_tree
         self.colors = []
-        self.print_tree = 200
 
-        self.nodes = 0
-        self.pruned = 0
-        self.pruned_l_quick = 0
-        self.pruned_l_lp = 0
-        self.pruned_r_quick = 0
-        self.pruned_r_lp = 0
-        self.initSolution = False
         plt.ion()
         self.fig = plt.figure("B&B Tree", figsize=(40, 20))  # Create a figure
         self.ax = self.fig.add_subplot(111)
-
-        self.min_lp_len = min_lp_len
-        self.max_time = max_lp_time
-
-        self.precomputed = {}
-
-        self.stored = 0
 
     def draw_tree(self, is_final=False):
         if self.nodes % self.print_tree == 0 or is_final:
@@ -129,7 +62,7 @@ class BBVisual:
             x_margin = (x_max - x_min) * 0.80
             plt.xlim(x_min - x_margin, x_max + x_margin)
 
-            node_size = 300 / np.log(self.nodes + 2)
+            node_size = 150 / np.log(self.nodes*2 + 2)
 
             nx.draw(self.tree, pos, node_color=self.colors, node_size=node_size)
             print("nodes", self.nodes, "pruned", self.pruned, "len sol", len(self.solution),
@@ -159,7 +92,7 @@ class BBVisual:
         matplotlib.use('module://backend_interagg')
 
     def step(self, solution: List[Offer], offers: list[Offer], reduction: float, parent=None):
-        if self.nodes % 100 == 0:
+        if self.nodes % self.info == 0:
             print(self.nodes, len(self.precomputed), self.stored)
         self.nodes += 1
         current_node = self.nodes
@@ -175,7 +108,7 @@ class BBVisual:
         if len(offers) == 0:
             self.colors[-1] = black
             self.initSolution = True
-            return
+            return 0
 
         l_reduction = reduction + offers[0].reduction
         l_solution = solution + [offers[0]]
@@ -185,51 +118,52 @@ class BBVisual:
 
         l_incompatible = [offer for flight in offers[0].flights for offer in flight.offers]
         l_offers = [offer for offer in offers[1:] if offer not in l_incompatible]
+        offers_key = ".".join([str(offer.num) for offer in l_offers])
 
         pruned = False
         if self.initSolution:
-            if l_reduction + sum([offer.reduction for offer in l_offers]) < self.best_reduction:
-                self.prune(current_node, "LEFT")
-                pruned = True
+            if offers_key in self.precomputed.keys():
+                if self.precomputed[offers_key] + reduction < self.best_reduction:
+                    self.prune(current_node, "LEFT", precomputed=True)
+                    best_left = self.precomputed[offers_key]
+                    pruned = True
             else:
-                pruned = self.run_and_check_lp(l_offers, l_reduction, current_node, l_solution, "LEFT")
+                l_offers_reduction = sum([offer.reduction for offer in l_offers])
+                bound = reduction + l_offers_reduction
+                if bound < self.best_reduction:
+                    self.prune(current_node, "LEFT")
+                    pruned = True
+                    best_left = l_offers_reduction
+
         if not pruned:
-            self.step(l_solution, l_offers, l_reduction, current_node)
+            best_left = self.step(l_solution, l_offers, l_reduction, current_node)
+
+        self.precomputed[str(offers[0].num) + "." + offers_key] = best_left + offers[0].reduction
 
         r_offers = offers[1:]
+        offers_key = ".".join([str(offer.num) for offer in r_offers])
 
-        if reduction + sum([offer.reduction for offer in r_offers]) < self.best_reduction:
-            self.prune(current_node, "RIGHT")
-            return
-        else:
-            pruned = self.run_and_check_lp(r_offers, reduction, current_node, solution, "RIGHT")
-
-        if not pruned:
-            self.step(solution, r_offers, reduction, current_node)
-
-    def run_and_check_lp(self, offers, reduction, current_node, solution, side):
         pruned = False
-        offers_key = ".".join([str(offer.num) for offer in offers])
         if offers_key in self.precomputed.keys():
             if self.precomputed[offers_key] + reduction < self.best_reduction:
-                self.stored += 1
-                self.prune(current_node, side, precomputed=True)
+                self.prune(current_node, "RIGHT", precomputed=True)
+                best_right = self.precomputed[offers_key]
                 pruned = True
-        elif len(offers) <= self.min_lp_len:
-            lp_bound, sol = self.run_lp(offers, reduction, self.best_reduction, side, self.max_time)
+        else:
+            r_offers_reduction = sum([offer.reduction for offer in r_offers])
+            bound = reduction + r_offers_reduction
 
-            if sol is not None:
-                solution += sol
-                reduction += lp_bound
-                self.update_sol(solution, reduction, from_mip=True, parent=current_node)
+            if bound < self.best_reduction:
+                self.prune(current_node, "RIGHT")
                 pruned = True
-            elif reduction + lp_bound < self.best_reduction:
-                self.prune(current_node, side, lp=True)
-                pruned = True
+                best_right = r_offers_reduction
 
-            self.precomputed[offers_key] = lp_bound
 
-        return pruned
+        if not pruned:
+            best_right = self.step(solution, r_offers, reduction, current_node)
+
+        return max(best_left, best_right) + offers[0].reduction
+
 
     def prune(self, parent, side, lp=False, precomputed=False):
         self.nodes += 1

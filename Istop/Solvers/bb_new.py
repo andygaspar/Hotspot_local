@@ -4,6 +4,7 @@ from typing import List
 
 import numpy as np
 import matplotlib
+from _distutils_hack import override
 from matplotlib import pyplot as plt
 
 
@@ -12,88 +13,17 @@ from gurobipy import Model, GRB, quicksum, Env
 import networkx as nx
 from networkx.drawing.nx_agraph import write_dot, graphviz_layout
 
-
-class Precomputed:
-    def __init__(self, offers):
-        self.offers = [offer.num for offer in offers]
-        self.key = ".".join([str(offer.num) for offer in self.offers])
-        self.lb = None
+from Istop.Solvers.bb import BB, Offer
+from Istop.Solvers import bb
+from Istop.old.bb_old import get_offers_for_flight
 
 
-class Offer:
-    def __init__(self, offer, reduction, num):
-        self.offer = offer
-        self.reduction = reduction
-        self.flights = [flight for couple in offer for flight in couple]
-        self.num = num
+stop = bb.stop
 
-    def __repr__(self):
-        return str(self.num) + " " + ' '.join([f.name for f in self.flights])
-
-    def __eq__(self, other):
-        return self.num == other.num
-
-
-def get_offers_for_flight(flight, r_offers):
-    j = 0
-    indexes = []
-    for offer in r_offers:
-        match = offer.offer
-        for couple in match:
-            if flight.slot == couple[0].slot or flight.slot == couple[1].slot:
-                indexes.append(j)
-        j += 1
-    return indexes
-
-
-def stop(model, where):
-
-    if where == GRB.Callback.MIP:
-        objbnd = model.cbGet(GRB.Callback.MIP_OBJBND)
-
-        if model._reduction + model._initial_cost - objbnd < model._best_reduction:
-            model.terminate()
-
-
-class BB:
+class BB_new(BB):
 
     def __init__(self, offers, reductions, flights: List[IstopFlight], min_lp_len=80, max_lp_time=10, print_info=100):
-
-        self.best_reduction = 0
-        self.best_bound = 0
-
-        order = np.flip(np.argsort(reductions))
-        self.offers = [Offer(offers[j], reductions[j], i) for i, j in enumerate(order)]
-
-        self.set_match_for_flight(flights)
-        self.solution = []
-
-        self.nodes = 0
-        self.pruned = 0
-        self.pruned_l_quick = 0
-        self.pruned_l_lp = 0
-        self.pruned_r_quick = 0
-        self.pruned_r_lp = 0
-        self.initSolution = False
-
-        self.min_lp_len = min_lp_len
-        self.max_time = max_lp_time
-
-        self.lp_time = 0
-
-        self.precomputed = {}
-
-        self.stored = 0
-
-        self.info = print_info
-
-    def print_info(self, is_final=False):
-        if self.nodes % self.info == 0 or is_final:
-
-            print("nodes", self.nodes, "pruned", self.pruned, "len sol", len(self.solution),
-                  "reduciton", self.best_reduction)
-            print("LEFT   q_pruned", self.pruned_l_quick, " lp_pruned", self.pruned_l_lp)
-            print("RIGHT  q_pruned", self.pruned_r_quick, " lp_pruned", self.pruned_r_lp)
+        super().__init__(offers, reductions, flights, min_lp_len, max_lp_time, print_info)
 
     def set_match_for_flight(self, flights: List[IstopFlight]):
         for flight in flights:
@@ -104,17 +34,13 @@ class BB:
                         flight.offers.append(offer)
 
     def run(self):
-        # plt.ion()  # Set pyplot to interactive mode
         self.step([], self.offers, 0)
 
         if len(self.solution) > 0:
             self.solution = [offer.offer for offer in self.solution]
 
     def step(self, solution: List[Offer], offers: list[Offer], reduction: float):
-        # if self.nodes % 20 == 0:
-        #     print(self.nodes, len(self.precomputed), self.stored)
         self.nodes += 1
-
         if len(offers) == 0:
             self.initSolution = True
             return
@@ -127,53 +53,57 @@ class BB:
 
         l_incompatible = [offer for flight in offers[0].flights for offer in flight.offers]
         l_offers = [offer for offer in offers[1:] if offer not in l_incompatible]
+        offers_key = ".".join([str(offer.num) for offer in l_offers])
 
         pruned = False
         if self.initSolution:
-            if l_reduction + sum([offer.reduction for offer in l_offers]) < self.best_reduction:
-                # self.prune("LEFT")
-                pruned = True
+            if offers_key in self.precomputed.keys():
+                if self.precomputed[offers_key] + reduction < self.best_reduction:
+                    pruned = True
             else:
-                pruned = self.run_and_check_lp(l_offers, l_reduction, l_solution, "LEFT")
+                bound = reduction + sum([offer.reduction for offer in l_offers])
+                if bound < self.best_reduction:
+                    pruned = True
+                elif len(l_offers) <= self.min_lp_len:
+                    pruned, bound = self.run_and_check_lp(l_offers, l_reduction, l_solution, "LEFT")
+
+                if pruned:
+                    self.precomputed[offers_key] = bound
         if not pruned:
             self.step(l_solution, l_offers, l_reduction)
 
         r_offers = offers[1:]
-
-        if reduction + sum([offer.reduction for offer in r_offers]) < self.best_reduction:
-            self.prune("RIGHT")
-            pruned = True
+        offers_key = ".".join([str(offer.num) for offer in r_offers])
+        if offers_key in self.precomputed.keys():
+            if self.precomputed[offers_key] + reduction < self.best_reduction:
+                pruned = True
         else:
-            pruned = self.run_and_check_lp(r_offers, reduction, solution, "RIGHT")
+            bound = reduction + sum([offer.reduction for offer in r_offers])
+            if bound < self.best_reduction:
+                pruned = True
+            elif len(r_offers) <= self.min_lp_len:
+                pruned, bound = self.run_and_check_lp(r_offers, reduction, solution, "RIGHT")
+
+            if pruned:
+                self.precomputed[offers_key] = bound
 
         if not pruned:
             self.step(solution, r_offers, reduction)
 
     def run_and_check_lp(self, offers, reduction, solution, side):
         pruned = False
-        offers_key = ".".join([str(offer.num) for offer in offers])
-        if offers_key in self.precomputed.keys():
-            if self.precomputed[offers_key] + reduction < self.best_reduction:
-                # self.stored += 1
-                # self.prune(current_node, side)
-                pruned = True
-        elif len(offers) <= self.min_lp_len:
-            lp_bound, sol = self.run_lp(offers, reduction, self.best_reduction, side, self.max_time)
-            if sol is not None:
-                solution += sol
-                reduction += lp_bound
-                self.solution = solution
-                self.best_reduction = reduction
-                pruned = True
-            elif reduction + lp_bound < self.best_reduction:
-                # self.prune(side, lp=True)
-                pruned = True
+        lp_bound, sol = self.run_lp(offers, reduction, self.best_reduction, side, self.max_time)
+        if sol is not None:
+            solution += sol
+            reduction += lp_bound
+            self.update_sol(solution, reduction, from_mip=True)
+            pruned = True
+        elif reduction + lp_bound < self.best_reduction:
+            pruned = True
 
-            self.precomputed[offers_key] = lp_bound
+        return pruned, lp_bound
 
-        return pruned
-
-    def prune(self, side, lp=False):
+    def prune(self, side, lp=False, precomputed=False):
         self.nodes += 1
         self.pruned += 1
         if side == "LEFT":
@@ -192,7 +122,7 @@ class BB:
         self.best_reduction = reduction
         if from_mip:
             self.nodes += 1
-        # print("sol", self.nodes, self.best_reduction, self.solution, 'mip' if from_mip else 'leaf')
+
 
     def run_lp(self, offers_, reduction, best_reduction, side, time_limit):
 
@@ -283,6 +213,13 @@ class BB:
 
         branch_reduction = initial_cost - m.ObjBound
 
+        # status = "OPTIMAL" if (m.status == 2 and reduction + branch_reduction > best_reduction) \
+        #     else "bound" if m.status != 2 else "OPT_bound"
+        #
+        # print(status, len(offers_), time.time() - t,
+        #       reduction + branch_reduction, best_reduction, side)
+        # final_cost = m.getObjective().getValue()
+
         if m.status == 2 and reduction + branch_reduction > best_reduction:
             solution = []
             for i in range(len(offers_)):
@@ -290,8 +227,6 @@ class BB:
                     solution.append(offers_[i])
         else:
             solution = None
-
-        self.lp_time += time.time() - t
 
         return branch_reduction, solution
 
