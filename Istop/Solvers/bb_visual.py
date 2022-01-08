@@ -52,8 +52,18 @@ class BBVisual(BB):
         self.fig = plt.figure("B&B Tree", figsize=(40, 20))  # Create a figure
         self.ax = self.fig.add_subplot(111)
 
+        self.pruned_l = 0
+        self.pruned_l_stored = 0
+        self.pruned_r = 0
+        self.pruned_r_stored = 0
+
+        self.node_list = []
+        self.edges = []
+
     def draw_tree(self, is_final=False):
         if self.nodes % self.print_tree == 0 or is_final:
+            self.tree.add_nodes_from(self.node_list)
+            self.tree.add_edges_from(self.edges)
             plt.cla()
             pos = graphviz_layout(self.tree, prog='dot')
             x_values, y_values = zip(*pos.values())
@@ -67,8 +77,8 @@ class BBVisual(BB):
             nx.draw(self.tree, pos, node_color=self.colors, node_size=node_size)
             print("nodes", self.nodes, "pruned", self.pruned, "len sol", len(self.solution),
                   "reduciton", self.best_reduction)
-            print("LEFT   q_pruned", self.pruned_l_quick, " lp_pruned", self.pruned_l_lp)
-            print("RIGHT  q_pruned", self.pruned_r_quick, " lp_pruned", self.pruned_r_lp)
+            print("LEFT  sum pruned", self.pruned_l, " pruned stored", self.pruned_l_stored)
+            print("RIGHT sum pruned", self.pruned_r, " pruned stored", self.pruned_r_stored)
             # nx.draw_networkx_labels(self.tree, pos, self.labels, horizontalalignment="center", font_size=15)
             self.fig.canvas.draw()
             self.fig.canvas.flush_events()
@@ -97,11 +107,13 @@ class BBVisual(BB):
         self.nodes += 1
         current_node = self.nodes
 
-        self.tree.add_node(current_node)
+        # self.tree.add_node(current_node)
+        self.node_list.append(current_node)
         self.colors.append(blue)
 
         if parent is not None:
-            self.tree.add_edge(parent, current_node)
+            # self.tree.add_edge(parent, current_node)
+            self.edges.append((parent, current_node))
 
         self.draw_tree()
 
@@ -125,13 +137,14 @@ class BBVisual(BB):
             if offers_key in self.precomputed.keys():
                 if self.precomputed[offers_key] + reduction < self.best_reduction:
                     self.prune(current_node, "LEFT", precomputed=True)
+                    self.stored += 1
                     best_left = self.precomputed[offers_key]
                     pruned = True
             else:
                 l_offers_reduction = sum([offer.reduction for offer in l_offers])
-                bound = reduction + l_offers_reduction
+                bound = l_reduction + l_offers_reduction
                 if bound < self.best_reduction:
-                    self.prune(current_node, "LEFT")
+                    self.prune(current_node, "LEFT", leaf=(len(l_offers) == 0))
                     pruned = True
                     best_left = l_offers_reduction
 
@@ -147,6 +160,7 @@ class BBVisual(BB):
         if offers_key in self.precomputed.keys():
             if self.precomputed[offers_key] + reduction < self.best_reduction:
                 self.prune(current_node, "RIGHT", precomputed=True)
+                self.stored += 1
                 best_right = self.precomputed[offers_key]
                 pruned = True
         else:
@@ -154,35 +168,38 @@ class BBVisual(BB):
             bound = reduction + r_offers_reduction
 
             if bound < self.best_reduction:
-                self.prune(current_node, "RIGHT")
+                self.prune(current_node, "RIGHT", leaf=(len(r_offers) == 0))
                 pruned = True
                 best_right = r_offers_reduction
 
-
         if not pruned:
             best_right = self.step(solution, r_offers, reduction, current_node)
+        self.precomputed[str(offers[0].num) + "." + offers_key] = best_right
 
-        return max(best_left, best_right) + offers[0].reduction
+        return max(best_left + offers[0].reduction, best_right)
 
 
-    def prune(self, parent, side, lp=False, precomputed=False):
+    def prune(self, parent, side, leaf = False, precomputed=False):
         self.nodes += 1
         self.pruned += 1
         if side == "LEFT":
-            if not lp:
-                self.pruned_l_quick += 1
+            if not precomputed:
+                self.pruned_l += 1
             else:
-                self.pruned_l_lp += 1
+                self.pruned_l_stored += 1
         else:
-            if not lp:
-                self.pruned_r_quick += 1
+            if not precomputed:
+                self.pruned_r += 1
             else:
-                self.pruned_r_lp += 1
-        self.tree.add_node(self.nodes)
-        color = pink if precomputed else (green if side == "LEFT" else red)
+                self.pruned_r_stored += 1
+        self.node_list.append(self.nodes)
+        # self.tree.add_node(self.nodes)
+        color = pink if (precomputed and side == "LEFT") else (red if precomputed else green)
         self.colors.append(color)
+
         if parent is not None:
-            self.tree.add_edge(parent, self.nodes)
+            self.edges.append((parent, self.nodes))
+            # self.tree.add_edge(parent, self.nodes)
         self.draw_tree()
 
     def update_sol(self, solution, reduction, from_mip=False, parent=None):
@@ -190,10 +207,12 @@ class BBVisual(BB):
         self.best_reduction = reduction
         if from_mip:
             self.nodes += 1
-            self.tree.add_node(self.nodes)
+            # self.tree.add_node(self.nodes)
+            self.node_list.append(self.nodes)
             self.colors.append(orange)
             if parent is not None:
-                self.tree.add_edge(parent, self.nodes)
+                # self.tree.add_edge(parent, self.nodes)
+                self.edges.append((parent, self.nodes))
         else:
             self.colors[-1] = yellow
         # print("sol", self.nodes, self.best_reduction, self.solution, 'mip' if from_mip else 'leaf')

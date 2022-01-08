@@ -144,7 +144,8 @@ class GurobiSolver:
         self.set_objective()
         self.m.setParam('Cuts', 3)
         start = time.time()
-        self.m.optimize(stop)
+        # self.m.optimize(stop)
+        self.m.optimize()
         end = time.time() - start
 
         if timing:
@@ -184,4 +185,5 @@ class GurobiSolver:
         for i in range(len(self.matches)):
             if self.c[i].x > 0.5:
                 solution[i] = 1
+                print(self.matches[i])
         return solution

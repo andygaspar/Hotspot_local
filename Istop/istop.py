@@ -98,60 +98,67 @@ class Istop(mS.ModelStructure):
 
     def run(self, max_time=120, timing=False, verbose=False, branching=False):
         feasible = self.check_and_set_matches()
-        # if feasible:
-        #     t = time.time()
-        #     self.problem = GurobiSolver(self)
-        #     solution_vect, offers_vect = self.problem.run(timing=timing, verbose=verbose, branching=branching)
-        #     print("time Gurobi", time.time()-t)
-        #
-        #     self.assign_flights(solution_vect)
-        #
-        #     print("gurobi solution")
-        #     offers = 0
-        #     for i in range(len(self.matches)):
-        #         if offers_vect[i] > 0.9:
-        #             self.offers_selected.append(self.matches[i])
-        #             # print(self.matches[i])
-        #             offers += 1
-        #     print("Number of offers selected: ", offers)
-        #     print("reduction", self.initialTotalCosts - self.problem.m.getObjective().getValue())
-        #
-        #
-        # else:
-        #     for flight in self.flights:
-        #         flight.newSlot = flight.slot
-        #
-        # solution.make_solution(self)
-        # self.offer_solution_maker()
+
 
         print("start")
         t = time.time()
-        bb = BB_new_2(offers=self.matches, reductions=self.reductions, flights=self.flights, min_lp_len=5, print_info=1000)
+        bb = BB_new_2(offers=self.matches, reductions=self.reductions, flights=self.flights, min_lp_len=5,
+                      print_info=10000)
         bb.run()
         print("time alg", time.time() - t, "nodes", bb.nodes, "stored", len(bb.precomputed), "found", bb.stored, '\n\n')
 
         print("bb sol len ", len(bb.solution))
         print("bb reduction ", bb.best_reduction)
+        for o in bb.solution:
+            print(o)
+
+
+        if feasible:
+            t = time.time()
+            self.problem = GurobiSolver(self)
+            solution_vect, offers_vect = self.problem.run(timing=timing, verbose=verbose, branching=branching)
+            print("time Gurobi", time.time()-t)
+
+            self.assign_flights(solution_vect)
+
+            print("gurobi solution")
+            offers = 0
+            for i in range(len(self.matches)):
+                if offers_vect[i] > 0.9:
+                    self.offers_selected.append(self.matches[i])
+                    # print(self.matches[i])
+                    offers += 1
+            print("Number of offers selected: ", offers)
+
+
+
+        else:
+            for flight in self.flights:
+                flight.newSlot = flight.slot
+
+        solution.make_solution(self)
+        self.offer_solution_maker()
+        print("reduction", self.initialTotalCosts - self.compute_costs(self.flights, "final"))
         # 1438
-        print("start")
-        t = time.time()
-        bb = BBVisual(offers=self.matches, reductions=self.reductions, flights=self.flights, min_lp_len=1, print_info=100,
-                      print_tree=1000)
-        bb.run()
-        print("time alg", time.time() - t, "nodes", bb.nodes, "stored", bb.stored)
+        # print("start")
+        # t = time.time()
+        # bb = BBVisual(offers=self.matches, reductions=self.reductions, flights=self.flights, min_lp_len=1,
+        #               print_info=5000, print_tree=5000)
+        # bb.run()
+        # print("time alg", time.time() - t, "nodes", bb.nodes, "stored", bb.stored)
         # print('lp time', bb.lp_time)
 
-        print("bb sol len ", len(bb.solution))
-        print("bb reduction ", bb.best_reduction)
-        print("solution \n")
+        # print("bb sol len ", len(bb.solution))
+        # print("bb reduction ", bb.best_reduction)
+        # print("solution \n")
 
 
 
         # print('lp time', bb.lp_time)
 
-        print("bb sol len ", len(bb.solution))
-        print("bb reduction ", bb.best_reduction)
-        print("solution \n")
+        # print("bb sol len ", len(bb.solution))
+        # print("bb reduction ", bb.best_reduction)
+        # print("solution \n")
         # for offer in bb.solution:
         #     print(offer)
 
