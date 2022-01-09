@@ -25,9 +25,7 @@ schedule_maker = df_to_schedule.RealisticSchedule()
 n_flights = 120
 c_reduction = 0.5
 
-# n_flights = 80
-
-
+n_flights = 40
 
 
 for i in range(10):
