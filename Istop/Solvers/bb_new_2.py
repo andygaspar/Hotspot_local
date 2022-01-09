@@ -87,27 +87,34 @@ class BB_new_2(BB):
         self.precomputed[str(offers[0].num) + "." + offers_key] = best_left + offers[0].reduction
 
         r_offers = offers[1:]
-        offers_key = ".".join([str(offer.num) for offer in r_offers])
+        r_offers_key = ".".join([str(offer.num) for offer in r_offers])
 
-        pruned = False
-        if offers_key in self.precomputed.keys():
-            if self.precomputed[offers_key] + reduction < self.best_reduction:
-                self.stored += 1
-                self.precomputed_len = (self.precomputed_len * (self.stored - 1) + len(r_offers))/self.stored
-                if self.max_precomputed < len(r_offers):
-                    self.max_precomputed = len(r_offers)
-                best_right = self.precomputed[offers_key]
-                pruned = True
+        if r_offers_key != offers_key:
+            offers_key = r_offers_key
+
+            pruned = False
+            if offers_key in self.precomputed.keys():
+                if self.precomputed[offers_key] + reduction < self.best_reduction:
+                    self.stored += 1
+                    self.precomputed_len = (self.precomputed_len * (self.stored - 1) + len(r_offers))/self.stored
+                    if self.max_precomputed < len(r_offers):
+                        self.max_precomputed = len(r_offers)
+                    best_right = self.precomputed[offers_key]
+                    pruned = True
+            else:
+                r_offers_reduction = sum([offer.reduction for offer in r_offers])
+                bound = reduction + r_offers_reduction
+                if bound < self.best_reduction:
+                    pruned = True
+                    best_right = r_offers_reduction
+
+            if not pruned:
+                best_right = self.step(solution, r_offers, reduction)
+
+            self.precomputed[str(offers[0].num) + "." + offers_key] = best_right
+
+            return max(best_left + offers[0].reduction, best_right)
+
         else:
-            r_offers_reduction = sum([offer.reduction for offer in r_offers])
-            bound = reduction + r_offers_reduction
-            if bound < self.best_reduction:
-                pruned = True
-                best_right = r_offers_reduction
-
-        if not pruned:
-            best_right = self.step(solution, r_offers, reduction)
-
-        self.precomputed[str(offers[0].num) + "." + offers_key] = best_right
-
-        return max(best_left + offers[0].reduction, best_right)
+            print("fffff")
+            return best_left + offers[0].reduction

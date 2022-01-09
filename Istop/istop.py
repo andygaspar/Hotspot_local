@@ -99,8 +99,20 @@ class Istop(mS.ModelStructure):
     def run(self, max_time=120, timing=False, verbose=False, branching=False):
         feasible = self.check_and_set_matches()
 
+        # print("start")
+        # t = time.time()
+        # bb = BB_new_3(offers=self.matches, reductions=self.reductions, flights=self.flights, min_lp_len=5,
+        #               print_info=10000)
+        # bb.run()
+        # print("time alg", time.time() - t, "nodes", bb.nodes, "stored", len(bb.precomputed), "found", bb.stored, '\n\n')
+        #
+        # print("bb sol len ", len(bb.solution))
+        # print("bb reduction ", bb.best_reduction)
+        # for o in bb.solution:
+        #     print(o)
 
-        print("start")
+
+        print("start1")
         t = time.time()
         bb = BB_new_2(offers=self.matches, reductions=self.reductions, flights=self.flights, min_lp_len=5,
                       print_info=10000)
