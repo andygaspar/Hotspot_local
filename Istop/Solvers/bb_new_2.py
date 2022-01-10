@@ -66,7 +66,7 @@ class BB_new_2(BB):
         pruned = False
         if self.initSolution:
             if l_offers_key in self.precomputed.keys():
-                if self.precomputed[l_offers_key] + reduction < self.best_reduction:
+                if self.precomputed[l_offers_key] + l_reduction < self.best_reduction:
                     self.stored += 1
                     self.precomputed_len = (self.precomputed_len * (self.stored - 1) + len(l_offers))/self.stored
                     if self.max_precomputed < len(l_offers):

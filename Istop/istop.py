@@ -4,6 +4,7 @@ from Istop.AirlineAndFlight.istopFlight import IstopFlight
 from Istop.Solvers.bb_new import BB_new
 from Istop.Solvers.bb_new_2 import BB_new_2
 from Istop.Solvers.bb_new_3 import BB_new_3
+# from Istop.Solvers.bb_p import TreeExplorer
 from Istop.Solvers.bb_visual import BBVisual
 from Istop.Solvers.gurobySolver import GurobiSolver
 # from Istop.Solvers.mip_solver import MipSolver
@@ -22,7 +23,7 @@ import numpy as np
 import pandas as pd
 
 import time
-
+# import Istop.Solvers.bb_parallel as bp
 
 class Istop(mS.ModelStructure):
 
@@ -99,63 +100,80 @@ class Istop(mS.ModelStructure):
     def run(self, max_time=120, timing=False, verbose=False, branching=False):
         feasible = self.check_and_set_matches()
 
-        # print("start")
+        # print("start1")
         # t = time.time()
-        # bb = BB_new_3(offers=self.matches, reductions=self.reductions, flights=self.flights, min_lp_len=5,
-        #               print_info=10000)
+        # bb = BB_new_2(offers=self.matches, reductions=self.reductions, flights=self.flights, min_lp_len=5,
+        #               print_info=20000)
         # bb.run()
-        # print("time alg", time.time() - t, "nodes", bb.nodes, "stored", len(bb.precomputed), "found", bb.stored, '\n\n')
-        #
+        # t = time.time() - t
+        # print("time alg", t, "nodes", bb.nodes, "stored", len(bb.precomputed), "found", bb.stored)
         # print("bb sol len ", len(bb.solution))
         # print("bb reduction ", bb.best_reduction)
         # for o in bb.solution:
         #     print(o)
+        #
+        # print("\n")
 
 
-        print("start1")
+        # init_state = bp.init_state
+        # init_node = bp.Node(0, [], bb.offers)
+        #
+        # t = time.time()
+        # bb = TreeExplorer(init_state, init_node, bp.update_state, bp.process_node)
+        # final_state = bb.explore_tree()
+        # t = time.time()-t
+        # print("time parallel", t, final_state.reduction)
+
+
+
+
+        print("start2")
         t = time.time()
-        bb = BB_new_2(offers=self.matches, reductions=self.reductions, flights=self.flights, min_lp_len=5,
+        bb = BB_new_3(offers=self.matches, reductions=self.reductions, flights=self.flights, min_lp_len=5,
                       print_info=10000)
         bb.run()
-        print("time alg", time.time() - t, "nodes", bb.nodes, "stored", len(bb.precomputed), "found", bb.stored, '\n\n')
-
+        t = time.time() - t
+        print("time alg", t, "nodes", bb.nodes, "stored", len(bb.precomputed), "found", bb.stored)
         print("bb sol len ", len(bb.solution))
         print("bb reduction ", bb.best_reduction)
         for o in bb.solution:
             print(o)
 
+
+
+
         # print("bb sol len ", len(bb.solution))
         # print("bb reduction ", bb.best_reduction)
         # for o in bb.solution:
         #     print(o)
 
 
-        if feasible:
-            t = time.time()
-            self.problem = GurobiSolver(self)
-            solution_vect, offers_vect = self.problem.run(timing=timing, verbose=verbose, branching=branching)
-            print("time Gurobi", time.time()-t)
-
-            self.assign_flights(solution_vect)
-
-            print("gurobi solution")
-            offers = 0
-            for i in range(len(self.matches)):
-                if offers_vect[i] > 0.9:
-                    self.offers_selected.append(self.matches[i])
-                    # print(self.matches[i])
-                    offers += 1
-            print("Number of offers selected: ", offers)
-
-
-
-        else:
-            for flight in self.flights:
-                flight.newSlot = flight.slot
-
-        solution.make_solution(self)
-        self.offer_solution_maker()
-        print("reduction", self.initialTotalCosts - self.compute_costs(self.flights, "final"))
+        # if feasible:
+        #     t = time.time()
+        #     self.problem = GurobiSolver(self)
+        #     solution_vect, offers_vect = self.problem.run(timing=timing, verbose=verbose, branching=branching)
+        #     print("time Gurobi", time.time()-t)
+        #
+        #     self.assign_flights(solution_vect)
+        #
+        #     print("gurobi solution")
+        #     offers = 0
+        #     for i in range(len(self.matches)):
+        #         if offers_vect[i] > 0.9:
+        #             self.offers_selected.append(self.matches[i])
+        #             # print(self.matches[i])
+        #             offers += 1
+        #     print("Number of offers selected: ", offers)
+        #
+        #
+        #
+        # else:
+        #     for flight in self.flights:
+        #         flight.newSlot = flight.slot
+        #
+        # solution.make_solution(self)
+        # self.offer_solution_maker()
+        # print("reduction", self.initialTotalCosts - self.compute_costs(self.flights, "final"))
         # 1438
         # print("start")
         # t = time.time()
