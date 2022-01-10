@@ -124,6 +124,11 @@ class Istop(mS.ModelStructure):
         for o in bb.solution:
             print(o)
 
+        # print("bb sol len ", len(bb.solution))
+        # print("bb reduction ", bb.best_reduction)
+        # for o in bb.solution:
+        #     print(o)
+
 
         if feasible:
             t = time.time()
