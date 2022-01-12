@@ -69,3 +69,49 @@ def process_node(node: Node, state: State):
 
 def pruning_condition(node, state):
     return False
+
+
+def multinode_processing(node: Node, state: State):
+    child_list = [node]
+    new_state = state
+
+    node_count = 0
+    max_node = 5_000 if node.solution else 1000
+
+    while node_count < max_node and len(child_list) > 0:
+
+        current_node = child_list.pop(-1)
+
+        if len(current_node.offers) == 0:
+            new_state = State(current_node.reduction, current_node.solution, True) \
+                if new_state.reduction < current_node.reduction else new_state
+            continue
+
+        r_offers = current_node.offers[1:]
+
+        r_offers_reduction = sum([offer.reduction for offer in r_offers])
+        bound = current_node.reduction + r_offers_reduction
+        if not bound < state.reduction:
+            child_list.append(Node(current_node.reduction, current_node.solution, r_offers))
+
+        l_reduction = current_node.reduction + current_node.offers[0].reduction
+        l_solution = current_node.solution + [current_node.offers[0]]
+
+        if l_reduction > new_state.reduction:
+            new_state = State(l_reduction, l_solution, state.init_solution)
+
+        l_incompatible = [offer for flight in current_node.offers[0].flights for offer in flight.offers]
+        l_offers = [offer for offer in current_node.offers[1:] if offer not in l_incompatible]
+
+        if state.init_solution:
+            l_offers_reduction = sum([offer.reduction for offer in l_offers])
+            bound = l_reduction + l_offers_reduction
+            if not bound < state.reduction:
+                child_list.append(Node(l_reduction, l_solution, l_offers))
+        else:
+            child_list.append(Node(l_reduction, l_solution, l_offers))
+
+        node_count += 1
+
+    print(new_state, child_list)
+    return new_state, child_list

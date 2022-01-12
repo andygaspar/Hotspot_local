@@ -1,6 +1,11 @@
 import os
 from queue import PriorityQueue, Queue
 import ray
+import sys
+print('recursion')
+print(sys.getrecursionlimit())
+sys.setrecursionlimit(10000)
+print(sys.getrecursionlimit())
 
 
 class TreeExplorer:
@@ -59,5 +64,10 @@ class TreeExplorer:
             new_state, child_nodes = ray.get(ready)[0]
             self._state = self.__update_state(new_state, self._state)
             [self._nodes_list.put(child) for child in child_nodes if not self.__pruning_condition(child, self._state)]
+        self.close_ray()
 
         return self._state
+
+    @staticmethod
+    def close_ray():
+        ray.shutdown()

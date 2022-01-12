@@ -64,6 +64,8 @@ class BB:
 
         order = np.flip(np.argsort(reductions))
         self.offers = [Offer(offers[j], reductions[j], i) for i, j in enumerate(order)]
+        self.numOffers = len(self.offers)
+        self.reductions = np.array([reductions[i] for i in order])
 
         self.set_match_for_flight(flights)
         self.solution = []
