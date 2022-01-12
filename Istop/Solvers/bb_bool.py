@@ -80,9 +80,9 @@ class BBool(BB):
             self.best_reduction = l_reduction
 
         l_offers = comp_matrix[idx] * offers
+        l_offers[idx] = False
 
-        l_offers_key = ".".join([str(el) for el in np.nonzero(l_offers)[0]])
-        # l_offers_key = np.nonzero(l_offers)[0].tobytes()
+        l_offers_key = np.nonzero(l_offers)[0].tobytes()
 
         pruned = False
         if self.initSolution:
@@ -94,9 +94,12 @@ class BBool(BB):
                     #     self.max_precomputed = len(l_offers)
                     best_left = self.precomputed[l_offers_key]
                     pruned = True
+
+
             else:
                 l_offers_reduction = sum(reductions * l_offers)
                 bound = l_reduction + l_offers_reduction
+
                 if bound < self.best_reduction:
                     pruned = True
                     best_left = l_offers_reduction
@@ -107,10 +110,10 @@ class BBool(BB):
 
         r_offers = offers
         r_offers[idx] = False
-        r_offers_key = ".".join([str(el) for el in np.nonzero(r_offers)[0]])
-        # r_offers_key = np.nonzero(r_offers)[0].tobytes()
+        r_offers_key = np.nonzero(r_offers)[0].tobytes()
 
         pruned = False
+
         if r_offers_key in self.precomputed.keys():
             if self.precomputed[r_offers_key] + reduction < self.best_reduction:
                 # self.stored += 1
@@ -131,9 +134,7 @@ class BBool(BB):
 
         best = max(best_left + reductions[idx], best_right)
         r_offers[idx] = True
-        key = ".".join([str(el) for el in np.nonzero(r_offers)[0]])
-        # key = np.nonzero(r_offers)[0].tobytes()
+        key = np.nonzero(r_offers)[0].tobytes()
         self.precomputed[key] = best
-        best = 0
 
         return best

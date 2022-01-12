@@ -2,11 +2,7 @@ from typing import List
 
 from Istop.AirlineAndFlight.istopFlight import IstopFlight
 from Istop.Solvers.bb_bool import BBool
-from Istop.Solvers.bb_new import BB_new
-from Istop.Solvers.bb_new_2 import BB_new_2
-from Istop.Solvers.bb_new_3 import BB_new_3
-from Istop.Solvers.bb_visual import BBVisual
-from Istop.Solvers.gurobySolver import GurobiSolver
+from Istop.old.bb_new_2 import BB_new_2
 # from Istop.Solvers.mip_solver import MipSolver
 # from Istop.Solvers.xpress_solver import XpressSolver
 from ModelStructure import modelStructure as mS
@@ -16,7 +12,6 @@ from itertools import combinations
 from Istop.AirlineAndFlight.istopAirline import IstopAirline
 from ModelStructure.Flight.flight import Flight
 from ModelStructure.Slot.slot import Slot
-from ModelStructure.Solution import solution
 from OfferChecker.offerChecker import OfferChecker
 
 import numpy as np
@@ -26,8 +21,6 @@ import time
 
 # from Istop.Solvers.bb_p import TreeExplorer
 # import Istop.Solvers.bb_parallel as bp
-
-import resource
 
 class Istop(mS.ModelStructure):
 
@@ -104,6 +97,7 @@ class Istop(mS.ModelStructure):
     def run(self, max_time=120, timing=False, verbose=False, branching=False):
         feasible = self.check_and_set_matches()
 
+
         print("start2")
         t = time.time()
         bbol = BBool(offers=self.matches, reductions=self.reductions, flights=self.flights, min_lp_len=5,
@@ -118,6 +112,7 @@ class Istop(mS.ModelStructure):
             print(o)
 
         print("\n")
+
 
         print("start1")
         t = time.time()
@@ -134,6 +129,8 @@ class Istop(mS.ModelStructure):
             print(o)
 
         print("\n")
+
+
 
 
 

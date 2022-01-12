@@ -89,6 +89,10 @@ class BB:
 
         self.info = print_info
 
+        self.l_keys = []
+        self.r_keys = []
+
+
     def print_info(self, is_final=False):
         if self.nodes % self.info == 0 or is_final:
 

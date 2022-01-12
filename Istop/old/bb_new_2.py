@@ -73,6 +73,7 @@ class BB_new_2(BB):
                     #     self.max_precomputed = len(l_offers)
                     best_left = self.precomputed[l_offers_key]
                     pruned = True
+
             else:
                 l_offers_reduction = sum([offer.reduction for offer in l_offers])
                 bound = l_reduction + l_offers_reduction
