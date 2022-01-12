@@ -33,6 +33,9 @@ class Offer:
     def __eq__(self, other):
         return self.num == other.num
 
+    def __lt__(self, other):
+        return self.num < other.num
+
 
 def get_offers_for_flight(flight, r_offers):
     j = 0
@@ -107,7 +110,7 @@ class BB:
                 match = offer.offer
                 for couple in match:
                     if flight.slot == couple[0].slot or flight.slot == couple[1].slot:
-                        flight.offers.append(offer)
+                        flight.offers.append(offer.num)
 
     def run(self):
         # plt.ion()  # Set pyplot to interactive mode

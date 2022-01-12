@@ -5,6 +5,7 @@ from Istop.Solvers.bb_bool import BBool
 from Istop.old.bb_new_2 import BB_new_2
 # from Istop.Solvers.mip_solver import MipSolver
 # from Istop.Solvers.xpress_solver import XpressSolver
+from Istop.old.bb_new_3 import BB_new_3
 from ModelStructure import modelStructure as mS
 
 import sys
@@ -98,11 +99,15 @@ class Istop(mS.ModelStructure):
         feasible = self.check_and_set_matches()
 
 
-        print("start2")
+        print("bool")
         t = time.time()
         bbol = BBool(offers=self.matches, reductions=self.reductions, flights=self.flights, min_lp_len=5,
-                      print_info=50000)
+                      print_info=1000000)
+        t = time.time() - t
 
+        print("prep time", t)
+
+        t = time.time()
         bbol.run()
         t = time.time() - t
         print("time alg", t, "nodes", bbol.nodes)
@@ -114,21 +119,26 @@ class Istop(mS.ModelStructure):
         print("\n")
 
 
-        print("start1")
-        t = time.time()
-        bb = BB_new_2(offers=self.matches, reductions=self.reductions, flights=self.flights, min_lp_len=5,
-                      print_info=50000)
 
-
-        bb.run()
-        t = time.time() - t
-        print("time alg", t, "nodes", bb.nodes, "stored", len(bb.precomputed), "found", bb.stored)
-        print("bb sol len ", len(bb.solution))
-        print("bb reduction ", bb.best_reduction)
-        for o in bb.solution:
-            print(o)
-
-        print("\n")
+        # print("dict")
+        # t = time.time()
+        # bb = BB_new_2(offers=self.matches, reductions=self.reductions, flights=self.flights, min_lp_len=5,
+        #               print_info=5000)
+        # t = time.time() - t
+        #
+        # print("prep time", t)
+        #
+        # t = time.time()
+        #
+        # bb.run()
+        # t = time.time() - t
+        # print("time alg", t, "nodes", bb.nodes, "stored", len(bb.precomputed), "found", bb.stored)
+        # print("bb sol len ", len(bb.solution))
+        # print("bb reduction ", bb.best_reduction)
+        # for o in bb.solution:
+        #     print(o)
+        #
+        # print("\n")
 
 
 
@@ -149,17 +159,7 @@ class Istop(mS.ModelStructure):
 
 
 
-        # print("start2")
-        # t = time.time()
-        # bb = BB_new_3(offers=self.matches, reductions=self.reductions, flights=self.flights, min_lp_len=5,
-        #               print_info=10000)
-        # bb.run()
-        # t = time.time() - t
-        # print("time alg", t, "nodes", bb.nodes, "stored", len(bb.precomputed), "found", bb.stored)
-        # print("bb sol len ", len(bb.solution))
-        # print("bb reduction ", bb.best_reduction)
-        # for o in bb.solution:
-        #     print(o)
+
 
 
 

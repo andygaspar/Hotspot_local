@@ -1,4 +1,5 @@
 import copy
+import itertools
 import sys
 import time
 from typing import List
@@ -22,9 +23,6 @@ from Istop.old.bb_old import get_offers_for_flight
 stop = bb.stop
 
 
-class COffer:
-    def __init__(self, offer):
-        self.num = offer.num
 
 
 
@@ -35,23 +33,11 @@ class BBool(BB):
         self.precomputed_len = 0
         self.max_precomputed = 0
         self.compatibilityMatrix = np.full((self.numOffers, self.numOffers), False, dtype=bool)
-
-
         for i, offer in enumerate(self.offers):
-            incompatible = [off for flight in offer.flights for off in flight.offers]
-            indexes = [off.num for off in self.offers if off not in incompatible]
+            incompatible = np.unique([off for flight in offer.flights for off in flight.offers])
+            indexes = [off.num for off in self.offers if off.num not in incompatible]
             self.compatibilityMatrix[i, indexes] = True
 
-        self.cOffers = [COffer(offer) for offer in self.offers]
-
-
-    def set_match_for_flight(self, flights: List[IstopFlight]):
-        for flight in flights:
-            for offer in self.offers:
-                match = offer.offer
-                for couple in match:
-                    if flight.slot == couple[0].slot or flight.slot == couple[1].slot:
-                        flight.offers.append(offer)
 
     def run(self):
         self.step(np.full(self.numOffers, False), np.full(self.numOffers, True), 0, self.reductions, self.compatibilityMatrix)
@@ -61,8 +47,8 @@ class BBool(BB):
 
     def step(self, solution: np.array, offers: np.array, reduction: float, reductions, comp_matrix):
 
-        # if self.nodes % self.info == 0:
-        #     print(self.nodes, len(self.precomputed), self.stored, self.precomputed_len, self.max_precomputed)
+        if self.nodes % self.info == 0:
+            print(self.nodes, len(self.precomputed), self.stored, self.precomputed_len, self.max_precomputed)
 
         self.nodes += 1
         if np.sum(offers) == 0:
@@ -84,14 +70,16 @@ class BBool(BB):
 
         l_offers_key = np.nonzero(l_offers)[0].tobytes()
 
+        # print(sum(l_offers), "l offers")
+
         pruned = False
         if self.initSolution:
             if l_offers_key in self.precomputed.keys():
                 if self.precomputed[l_offers_key] + l_reduction < self.best_reduction:
-                    # self.stored += 1
-                    # self.precomputed_len = (self.precomputed_len * (self.stored - 1) + len(l_offers))/self.stored
-                    # if self.max_precomputed < len(l_offers):
-                    #     self.max_precomputed = len(l_offers)
+                    self.stored += 1
+                    self.precomputed_len = (self.precomputed_len * (self.stored - 1) + len(l_offers))/self.stored
+                    if self.max_precomputed < len(l_offers):
+                        self.max_precomputed = len(l_offers)
                     best_left = self.precomputed[l_offers_key]
                     pruned = True
 
@@ -112,14 +100,16 @@ class BBool(BB):
         r_offers[idx] = False
         r_offers_key = np.nonzero(r_offers)[0].tobytes()
 
+        # print(sum(r_offers), "r offers")
+
         pruned = False
 
         if r_offers_key in self.precomputed.keys():
             if self.precomputed[r_offers_key] + reduction < self.best_reduction:
-                # self.stored += 1
-                # self.precomputed_len = (self.precomputed_len * (self.stored - 1) + len(r_offers))/self.stored
-                # if self.max_precomputed < len(r_offers):
-                #     self.max_precomputed = len(r_offers)
+                self.stored += 1
+                self.precomputed_len = (self.precomputed_len * (self.stored - 1) + len(r_offers))/self.stored
+                if self.max_precomputed < len(r_offers):
+                    self.max_precomputed = len(r_offers)
                 best_right = self.precomputed[r_offers_key]
                 pruned = True
         else:

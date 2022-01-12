@@ -29,43 +29,79 @@ def update_state(new_state, old_state):
 
 
 def process_node(node: Node, state: State):
-    if len(node.offers) == 0:
-        return State(node.reduction, node.solution, True), []
-    child_list = []
-    new_state = state
+    self.nodes += 1
+    if np.sum(offers) == 0:
+        self.initSolution = True
+        return 0
 
-    l_reduction = node.reduction + node.offers[0].reduction
-    l_solution = node.solution + [node.offers[0]]
+    idx = np.nonzero(offers)[0][0]
 
-    if l_reduction > state.reduction:
-        new_state = State(l_reduction, l_solution, state.init_solution)
+    l_reduction = reduction + reductions[idx]
+    l_solution = copy.copy(solution)
+    l_solution[idx] = True
 
-    l_incompatible = [offer for flight in node.offers[0].flights for offer in flight.offers]
-    l_offers = [offer for offer in node.offers[1:] if offer not in l_incompatible]
+    if l_reduction > self.best_reduction:
+        self.solution = l_solution
+        self.best_reduction = l_reduction
+
+    l_offers = comp_matrix[idx] * offers
+    l_offers[idx] = False
+
+    l_offers_key = np.nonzero(l_offers)[0].tobytes()
 
     pruned = False
-    if state.init_solution:
-        l_offers_reduction = sum([offer.reduction for offer in l_offers])
-        bound = l_reduction + l_offers_reduction
-        if bound < state.reduction:
+    if self.initSolution:
+        if l_offers_key in self.precomputed.keys():
+            if self.precomputed[l_offers_key] + l_reduction < self.best_reduction:
+                # self.stored += 1
+                # self.precomputed_len = (self.precomputed_len * (self.stored - 1) + len(l_offers))/self.stored
+                # if self.max_precomputed < len(l_offers):
+                #     self.max_precomputed = len(l_offers)
+                best_left = self.precomputed[l_offers_key]
+                pruned = True
+
+
+        else:
+            l_offers_reduction = sum(reductions * l_offers)
+            bound = l_reduction + l_offers_reduction
+
+            if bound < self.best_reduction:
+                pruned = True
+                best_left = l_offers_reduction
+
+    if not pruned:
+        best_left = self.step(l_solution, l_offers, l_reduction, reductions, comp_matrix)
+
+    r_offers = offers
+    r_offers[idx] = False
+    r_offers_key = np.nonzero(r_offers)[0].tobytes()
+
+    pruned = False
+
+    if r_offers_key in self.precomputed.keys():
+        if self.precomputed[r_offers_key] + reduction < self.best_reduction:
+            # self.stored += 1
+            # self.precomputed_len = (self.precomputed_len * (self.stored - 1) + len(r_offers))/self.stored
+            # if self.max_precomputed < len(r_offers):
+            #     self.max_precomputed = len(r_offers)
+            best_right = self.precomputed[r_offers_key]
             pruned = True
+    else:
+        r_offers_reduction = sum(reductions * r_offers)
+        bound = reduction + r_offers_reduction
+        if bound < self.best_reduction:
+            pruned = True
+            best_right = r_offers_reduction
 
     if not pruned:
-        child_list.append(Node(l_reduction, l_solution, l_offers))
+        best_right = self.step(solution, r_offers, reduction, reductions, comp_matrix)
 
-    r_offers = node.offers[1:]
+    best = max(best_left + reductions[idx], best_right)
+    r_offers[idx] = True
+    key = np.nonzero(r_offers)[0].tobytes()
+    self.precomputed[key] = best
 
-    pruned = False
-
-    r_offers_reduction = sum([offer.reduction for offer in r_offers])
-    bound = node.reduction + r_offers_reduction
-    if bound < state.reduction:
-        pruned = True
-
-    if not pruned:
-        child_list.append(Node(node.reduction, node.solution, r_offers))
-
-    return new_state, child_list
+    return best
 
 def pruning_condition(node, state):
     return False
