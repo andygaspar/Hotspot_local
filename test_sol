@@ -1,5 +1,9 @@
-bb reduction  210.42659527770275
-[array([AFR20, AFR41], dtype=object), array([EJU27, EJU24], dtype=object)]
-[array([AFR16, AFR33], dtype=object), array([VLG11, VLG28], dtype=object)]
-[array([AFR43, AFR45], dtype=object), array([BEE40, BEE58], dtype=object)]
-[array([AFR48, AFR57], dtype=object), array([EJU55, EJU50], dtype=object)]
+bb reduction  2911.13970058574
+[array([AFR38, AFR117], dtype=object), array([EZY104, EZY106], dtype=object)]
+[array([AFR57, AFR100], dtype=object), array([DAH81, DAH103], dtype=object)]
+[array([AFR34, AFR88], dtype=object), array([EJU63, EJU80], dtype=object)]
+[array([AFR62, AFR110], dtype=object), array([DAH109, DAH76], dtype=object)]
+[array([AFR24, AFR102], dtype=object), array([VLG21, VLG84], dtype=object)]
+[array([AFR89, AFR95], dtype=object), array([EZY105, EZY18], dtype=object)]
+[array([AFR32, AFR71], dtype=object), array([EJU27, EJU50], dtype=object)]
+[array([AFR33, AFR48], dtype=object), array([LBT29, LBT47], dtype=object)]

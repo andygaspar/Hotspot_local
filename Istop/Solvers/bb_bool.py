@@ -82,6 +82,7 @@ class BBool(BB):
         l_offers = comp_matrix[idx] * offers
 
         l_offers_key = ".".join([str(el) for el in np.nonzero(l_offers)[0]])
+        # l_offers_key = np.nonzero(l_offers)[0].tobytes()
 
         pruned = False
         if self.initSolution:
@@ -107,6 +108,7 @@ class BBool(BB):
         r_offers = offers
         r_offers[idx] = False
         r_offers_key = ".".join([str(el) for el in np.nonzero(r_offers)[0]])
+        # r_offers_key = np.nonzero(r_offers)[0].tobytes()
 
         pruned = False
         if r_offers_key in self.precomputed.keys():
@@ -130,6 +132,7 @@ class BBool(BB):
         best = max(best_left + reductions[idx], best_right)
         r_offers[idx] = True
         key = ".".join([str(el) for el in np.nonzero(r_offers)[0]])
+        # key = np.nonzero(r_offers)[0].tobytes()
         self.precomputed[key] = best
         best = 0
 
