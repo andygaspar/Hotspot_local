@@ -105,7 +105,8 @@ class Istop(mS.ModelStructure):
         bbol = BBool(offers=self.matches, reductions=self.reductions, flights=self.flights, min_lp_len=5,
                       print_info=1000000)
         t = time.time() - t
-
+        bool_cpp = c_bool.Run(bbol.compatibilityMatrix, bbol.reductions, bbol.offers)
+        bool_cpp.test()
         print("prep time", t)
 
         t = time.time()
@@ -119,10 +120,9 @@ class Istop(mS.ModelStructure):
 
         print("\n")
 
-        bool_cpp = c_bool.Run()
+        bool_cpp = c_bool.Run(bbol.compatibilityMatrix, bbol.reductions, bbol.offers)
 
-        bool_cpp.test(bbol.compatibilityMatrix)
-
+        bool_cpp.test()
 
 
         # print("dict")

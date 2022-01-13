@@ -1,2 +1,3 @@
-g++ -c -fPIC bb_cpp.cc -o bb_cpp.o
-g++ -shared -Wl,-soname,lib_run.so -o lib_run.so bb_cpp.o
+src=/home/andrea/Scrivania/Hotspot_/Istop/Solvers/C_ALG/
+g++ -c -fPIC ${src}bb_cpp.cc -o ${src}bb_cpp.o
+g++ -shared -Wl,-soname,${src}lib_run.so -o ${src}lib_run.so ${src}bb_cpp.o

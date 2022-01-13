@@ -9,36 +9,33 @@ import os
 
 class Run(object):
 
-    def __init__(self):
-
+    def __init__(self, comp_matrix, reductions, offers):
+        self.offers = offers
+        self.solution = None
+        os.system('./Istop/Solvers/C_ALG/compile.sh')
         self.numProcs = os.cpu_count()
         self.lib = ctypes.CDLL('./Istop/Solvers/C_ALG/lib_run.so')
-        self.lib.Run_.argtypes = [ctypes.c_void_p]
-        self.lib.check_.argtypes = [ctypes.c_void_p]
-        self.lib.test_.argtypes = [ctypes.c_bool]
-        # self.lib.air_triple_check_.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_uint]
+        self.lib.Run_.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_short]
+        self.lib.print_.argtypes = [ctypes.c_void_p]
+        self.lib.run_.argtypes = [ctypes.c_void_p]
+        self.lib.get_solution_.argtypes = [ctypes.c_void_p]
+        self.lib.get_reduction_.argtypes= [ctypes.c_void_p]
+        self.lib.get_solution_.restype = ndpointer(dtype=ctypes.c_bool, shape=(comp_matrix.shape[0],))
+        self.lib.get_reduction_.restype = ctypes.c_double
 
-        # self.couples = np.array(couples).astype(np.short)
+        self.obj = self.lib.Run_(ctypes.c_void_p(comp_matrix.ctypes.data),
+                                 ctypes.c_void_p(np.array(reductions).astype(float).ctypes.data),
+                                 ctypes.c_short(comp_matrix.shape[0]))
 
+    def test(self):
+        t = time.time()
+        self.lib.run_(ctypes.c_void_p(self.obj))
+        t = time.time() - t
+        print("c time ", t)
+        sol = self.lib.get_solution_(ctypes.c_void_p(self.obj))
+        self.solution = [self.offers[i].offer for i in range(len(sol)) if sol[i]]
+        reduction = self.lib.get_reduction_(ctypes.c_void_p(self.obj))
+        print("sol", reduction)
 
-        #         triples.remove(t)
-        # self.triples = np.array(triples).astype(np.short)
-        #
-        # self.lib.OfferChecker_.restype = ctypes.c_void_p
-        # self.obj = self.lib.OfferChecker_(ctypes.c_void_p(schedule_mat.ctypes.data),
-        #                                   ctypes.c_short(schedule_mat.shape[0]),
-        #                                   ctypes.c_short(schedule_mat.shape[1]),
-        #                                   ctypes.c_void_p(self.couples.ctypes.data),
-        #                                   ctypes.c_short(self.couples.shape[0]),
-        #                                   ctypes.c_short(self.couples.shape[1]),
-        #                                   ctypes.c_void_p(self.triples.ctypes.data),
-        #                                   ctypes.c_short(self.triples.shape[0]),
-        #                                   ctypes.c_short(self.triples.shape[1]),
-        #                                   ctypes.c_short(self.numProcs))
-        self.obj = self.lib.Run_(ctypes.c_void_p())
-        self.lib.check_(ctypes.c_void_p(self.obj))
-
-
-    def test(self, comp_matrix):
-        self.lib.test_(ctypes.c_bool(comp_matrix.ctypes.data), ctypes.c_short(comp_matrix.shape[0]))
-
+        for s in self.solution:
+            print(s)
