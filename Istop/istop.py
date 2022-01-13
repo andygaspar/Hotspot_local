@@ -14,6 +14,7 @@ from Istop.AirlineAndFlight.istopAirline import IstopAirline
 from ModelStructure.Flight.flight import Flight
 from ModelStructure.Slot.slot import Slot
 from OfferChecker.offerChecker import OfferChecker
+import Istop.Solvers.bb_c as c_bool
 
 import numpy as np
 import pandas as pd
@@ -117,6 +118,10 @@ class Istop(mS.ModelStructure):
             print(o)
 
         print("\n")
+
+        bool_cpp = c_bool.Run()
+
+        bool_cpp.test(bbol.compatibilityMatrix)
 
 
 

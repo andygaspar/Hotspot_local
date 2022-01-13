@@ -47,8 +47,8 @@ class BBool(BB):
 
     def step(self, solution: np.array, offers: np.array, reduction: float, reductions, comp_matrix):
 
-        if self.nodes % self.info == 0:
-            print(self.nodes, len(self.precomputed), self.stored, self.precomputed_len, self.max_precomputed)
+        # if self.nodes % self.info == 0:
+        #     print(self.nodes, len(self.precomputed), self.stored, self.precomputed_len, self.max_precomputed)
 
         self.nodes += 1
         if np.sum(offers) == 0:
@@ -76,10 +76,10 @@ class BBool(BB):
         if self.initSolution:
             if l_offers_key in self.precomputed.keys():
                 if self.precomputed[l_offers_key] + l_reduction < self.best_reduction:
-                    self.stored += 1
-                    self.precomputed_len = (self.precomputed_len * (self.stored - 1) + len(l_offers))/self.stored
-                    if self.max_precomputed < len(l_offers):
-                        self.max_precomputed = len(l_offers)
+                    # self.stored += 1
+                    # self.precomputed_len = (self.precomputed_len * (self.stored - 1) + len(l_offers))/self.stored
+                    # if self.max_precomputed < len(l_offers):
+                    #     self.max_precomputed = len(l_offers)
                     best_left = self.precomputed[l_offers_key]
                     pruned = True
 
@@ -106,10 +106,10 @@ class BBool(BB):
 
         if r_offers_key in self.precomputed.keys():
             if self.precomputed[r_offers_key] + reduction < self.best_reduction:
-                self.stored += 1
-                self.precomputed_len = (self.precomputed_len * (self.stored - 1) + len(r_offers))/self.stored
-                if self.max_precomputed < len(r_offers):
-                    self.max_precomputed = len(r_offers)
+                # self.stored += 1
+                # self.precomputed_len = (self.precomputed_len * (self.stored - 1) + len(r_offers))/self.stored
+                # if self.max_precomputed < len(r_offers):
+                #     self.max_precomputed = len(r_offers)
                 best_right = self.precomputed[r_offers_key]
                 pruned = True
         else:

@@ -22,7 +22,7 @@ np.random.seed(10)
 
 schedule_maker = df_to_schedule.RealisticSchedule()
 
-n_flights = 120
+n_flights = 30
 c_reduction = 0.5
 
 # n_flights = 80
@@ -34,7 +34,7 @@ for i in range(10):
     slot_list, fl_list, airport = schedule_maker.make_sl_fl_from_data(n_flights=n_flights,
                                                                       capacity_reduction=c_reduction,
                                                                       compute=True)
-    if i == 2:
+    if i == 0:
         print(airport)
         udpp_model = UDPPmodel(slot_list, fl_list, hfes=0)
         t = time.time()
@@ -45,6 +45,6 @@ for i in range(10):
         fl_list = udpp_model.get_new_flight_list()
 
         print("istop")
-        istop = Istop(slot_list, fl_list, triples=False)
+        istop = Istop(slot_list, fl_list, triples=True)
         istop.run(timing=True, verbose=False, branching=True)
         # istop.print_performance()
