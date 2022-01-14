@@ -43,7 +43,7 @@ def process_node(node: Node, state: State):
     new_state = state
 
     node_count = 0
-    max_node = float("inf")#20_000 if np.any(node.solution) else 1000
+    max_node = 20_000 if np.any(node.solution) else 1000
 
     while node_count < max_node and len(child_list) > 0:
 
@@ -55,6 +55,15 @@ def process_node(node: Node, state: State):
             continue
 
         idx = np.nonzero(current_node.offers)[0][0]
+
+        r_offers = copy.copy(node.offers)
+        r_offers[idx] = False
+
+        r_offers_reduction = sum(state.reductions * r_offers)
+        bound = current_node.reduction + r_offers_reduction
+        if not bound < new_state.reduction:
+            child_list.append(Node(copy.copy(current_node.solution), r_offers, current_node.reduction))
+
 
         l_reduction = current_node.reduction + state.reductions[idx]
         l_solution = copy.copy(current_node.solution)
@@ -75,13 +84,7 @@ def process_node(node: Node, state: State):
         else:
             child_list.append(Node(l_solution, l_offers, l_reduction))
 
-        r_offers = copy.copy(node.offers)
-        r_offers[idx] = False
 
-        r_offers_reduction = sum(state.reductions * r_offers)
-        bound = current_node.reduction + r_offers_reduction
-        if not bound < new_state.reduction:
-            child_list.append(Node(copy.copy(current_node.solution), r_offers, current_node.reduction))
 
         node_count +=1
     return new_state, child_list

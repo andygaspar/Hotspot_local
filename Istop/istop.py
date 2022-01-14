@@ -3,6 +3,7 @@ from typing import List
 from Istop.AirlineAndFlight.istopFlight import IstopFlight
 from Istop.Solvers.bb_bool import BBool
 from Istop.Solvers.bb_p import TreeExplorer
+from Istop.Solvers.gurobySolverOffer import GurobiSolverOffer
 from Istop.old.bb_new_2 import BB_new_2
 # from Istop.Solvers.mip_solver import MipSolver
 # from Istop.Solvers.xpress_solver import XpressSolver
@@ -99,17 +100,19 @@ class Istop(mS.ModelStructure):
 
     def run(self, max_time=120, timing=False, verbose=False, branching=False):
         feasible = self.check_and_set_matches()
-
-
-        print("bool")
-        t = time.time()
-        bbol = BBool(offers=self.matches, reductions=self.reductions, flights=self.flights, min_lp_len=5,
-                      print_info=1000000)
-        print(bbol.reductions)
-        t = time.time() - t
+#match before [[array([IBK25, IBK34], dtype=object), array([SAS26, SAS30], dtype=object)], [array([RYR3, RYR17], dtype=object), array([SAS5, SAS22], dtype=object)], [array([SAS19, SAS30], dtype=object), array([VKG32, VKG18], dtype=object)]]
+        # print("match before", self.matches)
+        # t = time.time()
+        # bbol = BBool(offers=self.matches, reductions=self.reductions, flights=self.flights, min_lp_len=5,
+        #               print_info=1000000)
+        # t = time.time() - t
+        # print("prep time", t)
         # bool_cpp = c_bool.Run(bbol.compatibilityMatrix, bbol.reductions, bbol.offers)
         # bool_cpp.test()
-        print("prep time", t)
+        g_offer = GurobiSolverOffer(self, offers=self.matches, reductions=self.reductions)
+        g_offer.run(timing=True)
+        print("reduction gurobi ", g_offer.m.getObjective().getValue())
+
 
 
         # offers = bbol.offers
@@ -142,9 +145,9 @@ class Istop(mS.ModelStructure):
         #
         # print("\n")
 
-        bool_cpp = c_bool.Run(bbol.compatibilityMatrix, bbol.reductions, bbol.offers)
-
-        bool_cpp.test()
+        # bool_cpp = c_bool.Run(bbol.compatibilityMatrix, bbol.reductions, bbol.offers)
+        #
+        # bool_cpp.test()
 
 
         # print("dict")

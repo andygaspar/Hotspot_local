@@ -2,6 +2,7 @@
 #include <string>
 #include <vector>
 #include <omp.h>
+#include <cstring>
 
 int value = 0;
 
@@ -11,9 +12,10 @@ using namespace std;
 
 class Run{
 
+    bool* comp_vect;
     bool** comp_matrix;
     double* reductions;
-    short size;
+    size_t size;
 
     bool initialSolution;
     double bestReduction;
@@ -22,17 +24,22 @@ class Run{
     int nodes = 0;
 
     public:
-    Run(bool* c_m, double* red, short s): comp_matrix{new bool*[s]}, reductions{red}, size{s}
+    Run(bool* c_m, double* red, size_t s): comp_matrix{new bool*[s]}, reductions{new double[s]}, size{s}, comp_vect{new bool[s*s]}
 
     {
+         memcpy(comp_vect, c_m, s*s*sizeof(bool));
          for (int i = 0 ; i< size; i++) {
-                comp_matrix[i]= &c_m[i*size];
-                std::cout<<comp_matrix[i][0]<<std::endl;
+                comp_matrix[i]= &comp_vect[i*size];
         }
+        memcpy(reductions, red, s*sizeof(double));
+
+        std::cout<<std::endl;
         initialSolution = false;
         bestReduction = 0;
         sol = new bool[size];
         for (int i= 0; i< size; i++){sol[i] = false;}
+
+//        run();
     }
 
     void step(bool* solution, bool* offers, double reduction,double*  reds, bool** c_m){
@@ -40,9 +47,6 @@ class Run{
         // leaf condition
         nodes += 1;
 
-        if (nodes % 5000 == 0) {
-            std::cout<<"node "<<nodes<<"   "<<bestReduction<<std::endl;
-        }
 
         int sum = 0;
         for (int i= 0; i< size; i++){
@@ -56,7 +60,7 @@ class Run{
 
         // l_offers
 
-        short idx = 0;
+        size_t idx = 0;
         while (offers[idx] == false) {idx++;}
 
         double l_reduction = reduction + reductions[idx];
@@ -113,7 +117,6 @@ class Run{
     }
 
     void run(){
-        print();
         bool* solution = new bool[size];
         for (int i= 0; i< size; i++){solution[i] = false;}
 
@@ -122,9 +125,12 @@ class Run{
         for (int i= 0; i< size; i++){offers[i] = true;}
 
         step(solution, offers, 0, reductions, comp_matrix);
+        std::cout<<"reduction c "<<bestReduction<<size<<std::endl;
+
 
         delete solution;
         delete offers;
+
 
     }
 
@@ -160,13 +166,13 @@ class Run{
 
 
 extern "C" {
-    Run* Run_(bool* comp_matrix, double* reductions, short size)
+    Run* Run_(bool* comp_matrix, double* reductions, size_t size)
     {return new Run(comp_matrix, reductions, size); }
     void run_(Run* run) {run -> run();}
 
     bool* get_solution_(Run* run) {return run -> get_solution();}
     double get_reduction_(Run* run) {return run -> get_reduction();}
     void print_(Run* run) {run -> print();}
-    //void step(bool* solution, bool* offers, double reduction,double*  reductions, double** comp_matrix, short size){ off -> print_triples(); }
+    //void step(bool* solution, bool* offers, double reduction,double*  reductions, double** comp_matrix, size_t size){ off -> print_triples(); }
 
 }
