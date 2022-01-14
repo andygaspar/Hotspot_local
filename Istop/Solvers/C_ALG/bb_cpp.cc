@@ -27,7 +27,7 @@ class Run{
     {
          for (int i = 0 ; i< size; i++) {
                 comp_matrix[i]= &c_m[i*size];
-//                std::cout<<comp_matrix[i][0]<std::endl;
+                std::cout<<comp_matrix[i][0]<<std::endl;
         }
         initialSolution = false;
         bestReduction = 0;

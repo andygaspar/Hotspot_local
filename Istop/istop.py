@@ -2,6 +2,7 @@ from typing import List
 
 from Istop.AirlineAndFlight.istopFlight import IstopFlight
 from Istop.Solvers.bb_bool import BBool
+from Istop.Solvers.bb_p import TreeExplorer
 from Istop.old.bb_new_2 import BB_new_2
 # from Istop.Solvers.mip_solver import MipSolver
 # from Istop.Solvers.xpress_solver import XpressSolver
@@ -22,7 +23,7 @@ import pandas as pd
 import time
 
 # from Istop.Solvers.bb_p import TreeExplorer
-# import Istop.Solvers.bb_parallel as bp
+import Istop.Solvers.bb_bool_parallel as bp
 
 class Istop(mS.ModelStructure):
 
@@ -104,21 +105,42 @@ class Istop(mS.ModelStructure):
         t = time.time()
         bbol = BBool(offers=self.matches, reductions=self.reductions, flights=self.flights, min_lp_len=5,
                       print_info=1000000)
+        print(bbol.reductions)
         t = time.time() - t
-        bool_cpp = c_bool.Run(bbol.compatibilityMatrix, bbol.reductions, bbol.offers)
-        bool_cpp.test()
+        # bool_cpp = c_bool.Run(bbol.compatibilityMatrix, bbol.reductions, bbol.offers)
+        # bool_cpp.test()
         print("prep time", t)
 
-        t = time.time()
-        bbol.run()
-        t = time.time() - t
-        print("time alg", t, "nodes", bbol.nodes)
-        print("bb sol len ", len(bbol.solution))
-        print("bb reduction ", bbol.best_reduction)
-        for o in bbol.solution:
-            print(o)
 
-        print("\n")
+        # offers = bbol.offers
+        # reductions = bbol.reductions
+        # num_offers = len(offers)
+        #
+        # init_state = bp.State(np.full(num_offers, False), 0, reductions, bbol.compatibilityMatrix, False)
+        # init_node = bp.Node(np.full(num_offers, False), np.full(num_offers, True), 0)
+        #
+        # t = time.time()
+        # bb = TreeExplorer(init_state, init_node, bp.update_state, bp.process_node)
+        # final_state = bb.explore_tree()
+        # t = time.time()-t
+        # print("time parallel", t, final_state.reduction)
+        # print(final_state.solution)
+        # for i, off in enumerate(bbol.offers):
+        #     if final_state.solution[i]:
+        #         print(off)
+
+
+
+        # t = time.time()
+        # bbol.run()
+        # t = time.time() - t
+        # print("\ntime alg", t, "nodes", bbol.nodes)
+        # print("bb sol len ", len(bbol.solution))
+        # print("bb reduction ", bbol.best_reduction)
+        # for o in bbol.solution:
+        #     print(o)
+        #
+        # print("\n")
 
         bool_cpp = c_bool.Run(bbol.compatibilityMatrix, bbol.reductions, bbol.offers)
 
@@ -148,18 +170,6 @@ class Istop(mS.ModelStructure):
 
 
 
-
-
-
-
-        # init_state = bp.init_state
-        # init_node = bp.Node(0, [], bb.offers)
-        #
-        # t = time.time()
-        # bb = TreeExplorer(init_state, init_node, bp.update_state, bp.multinode_processing)
-        # final_state = bb.explore_tree()
-        # t = time.time()-t
-        # print("time parallel", t, final_state.reduction)
 
 
 
