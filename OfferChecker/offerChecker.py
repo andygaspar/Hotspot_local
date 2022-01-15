@@ -10,7 +10,7 @@ import os
 class OfferChecker(object):
 
     def __init__(self, schedule_mat):
-
+        os.system('./OfferChecker/install_parallel.sh')
         self.numProcs = os.cpu_count()
         self.lib = ctypes.CDLL('./OfferChecker/liboffers_parallel.so')
         self.lib.OfferChecker_.argtypes = [ctypes.c_void_p, ctypes.c_short, ctypes.c_short,
@@ -18,6 +18,8 @@ class OfferChecker(object):
                                            ctypes.c_short, ctypes.c_short, ctypes.c_short]
         self.lib.air_couple_check_.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_uint]
         self.lib.air_triple_check_.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_uint]
+
+        self.compTime = 0
 
         couples = list(permutations([0, 1, 2, 3]))
         couples_copy = copy.copy(couples)
@@ -63,9 +65,11 @@ class OfferChecker(object):
         if len_array > 0:
             self.lib.air_couple_check_.restype = ndpointer(dtype=ctypes.c_bool, shape=(len_array,))
             input_vect = np.array(input_vect).astype(np.short)
+
+            t = time.time()
             answer = self.lib.air_couple_check_(ctypes.c_void_p(self.obj),
                                                 ctypes.c_void_p(input_vect.ctypes.data), ctypes.c_uint(len_array))
-
+            self.compTime += time.time() -t
             return [air_pairs[i] for i in range(len_array) if answer[i]]
         else:
             return []
@@ -98,8 +102,11 @@ class OfferChecker(object):
             self.lib.air_triple_check_.restype = ndpointer(dtype=ctypes.c_bool, shape=(len_array,))
             input_vect = np.array(input_vect).astype(np.short)
 
+            t = time.time()
             answer = self.lib.air_triple_check_(ctypes.c_void_p(self.obj),
                                                 ctypes.c_void_p(input_vect.ctypes.data), ctypes.c_uint(len_array))
+
+            self.compTime += time.time() - t
             return [air_trips[i] for i in range(len_array) if answer[i]]
 
         else:

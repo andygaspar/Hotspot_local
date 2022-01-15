@@ -1,7 +1,8 @@
-#include <iostream> 
+#include <iostream>
 #include <string>
 #include <vector>
 #include <omp.h>
+#include <sched.h>
 
 int value = 0;
 
@@ -116,7 +117,7 @@ class OfferChecker{
         bool* air_couple_check(short* airl_pair, unsigned offers){
             bool* matches = new bool[offers]; 
             omp_set_num_threads(num_procs);
-            #pragma omp parallel for schedule(dynamic) shared(matches, airl_pair, offers, mat)
+            #pragma omp parallel for schedule(static) shared(matches, airl_pair, offers, mat)
             for (int k = 0; k < offers; k++){
                 
                 if (check_couple_condition(&airl_pair[k*4])){
@@ -192,9 +193,8 @@ class OfferChecker{
             omp_set_num_threads(num_procs);
 
             bool* matches = new bool[offers];
-            #pragma omp parallel for schedule(dynamic) shared(matches, airl_pair, offers, mat)
+            #pragma omp parallel for schedule(static) shared(matches, airl_pair, offers, mat)
             for (int k = 0; k < offers; k++){
-                //std::cout<<k<<std::endl;
                 if (check_triple_condition(&airl_pair[k*6])){
                     matches[k] = true;
                 }
@@ -202,9 +202,7 @@ class OfferChecker{
                     matches[k] = false;
                 }
             }
-            //print_mat();
             return matches;
-            
         }
             
             

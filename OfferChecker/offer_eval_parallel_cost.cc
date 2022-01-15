@@ -1,7 +1,8 @@
-#include <iostream> 
+#include <iostream>
 #include <string>
 #include <vector>
 #include <omp.h>
+#include <sched.h>
 
 int value = 0;
 
@@ -10,7 +11,7 @@ void check(){
     std::cout<<"here"<<std::endl;
 }
 
-class OfferChecker{ 
+class OfferChecker{
     double** mat;
     short mat_rows;
     short mat_cols;
@@ -25,20 +26,20 @@ class OfferChecker{
 
     short num_procs;
 
-    public: 
+    public:
 
-       
 
-        OfferChecker(double* schedule_mat, short row, short col, 
-                    short* coup, short coup_row, short coup_col, short* trip, 
-                    short trip_row, short trip_col, 
-                    short n_procs): 
-            mat{new double*[row]}, mat_rows{row}, mat_cols{col}, 
-            couples{new short*[coup_row]}, couples_rows{coup_row}, couples_cols{coup_col}, 
-            triples{new short*[trip_row]}, triples_rows{trip_row}, triples_cols{trip_col}, 
+
+        OfferChecker(double* schedule_mat, short row, short col,
+                    short* coup, short coup_row, short coup_col, short* trip,
+                    short trip_row, short trip_col,
+                    short n_procs):
+            mat{new double*[row]}, mat_rows{row}, mat_cols{col},
+            couples{new short*[coup_row]}, couples_rows{coup_row}, couples_cols{coup_col},
+            triples{new short*[trip_row]}, triples_rows{trip_row}, triples_cols{trip_col},
             num_procs{n_procs}
          {
-            
+
          for (int i = 0 ; i< row; i++) {
                 mat[i]= &schedule_mat[i*col];
             }
@@ -55,7 +56,7 @@ class OfferChecker{
         ~OfferChecker(){mat = nullptr;}
 
 
-        void print_mat(){ 
+        void print_mat(){
             for (int i = 0 ; i< mat_rows; i++) {
                 for (int j=0; j< mat_cols; j++)
                     {std::cout<<mat[i][j]<<" ";}
@@ -63,7 +64,7 @@ class OfferChecker{
             }
         }
 
-        void print_couples(){ 
+        void print_couples(){
             for (int i = 0 ; i< couples_rows; i++) {
                 for (int j=0; j< couples_cols; j++)
                     {std::cout<<couples[i][j]<<" ";}
@@ -71,7 +72,7 @@ class OfferChecker{
             }
         }
 
-        void print_triples(){ 
+        void print_triples(){
             for (int i = 0 ; i< triples_rows; i++) {
                 for (int j=0; j< triples_cols; j++)
                     {std::cout<<triples[i][j]<<" ";}
@@ -88,7 +89,7 @@ class OfferChecker{
                     if (mat[flights[1]][1] <= mat[flights[couples[i][1]]][0]){
 
                         // couples[i]hecouples[i]k first airline's couples[i]onveniencouples[i]e
-                        if (mat[flights[0]][ 2 + flights[0]] + mat[flights[1]][ 2 + flights[1]] > 
+                        if (mat[flights[0]][ 2 + flights[0]] + mat[flights[1]][ 2 + flights[1]] >
                                 mat[flights[0]][ 2 + flights[couples[i][0]]] + mat[flights[1]][ 2 + flights[couples[i][1]]]){
 
                             // secouples[i]ond airline eta couples[i]hecouples[i]k
@@ -96,38 +97,53 @@ class OfferChecker{
 
                                 if (mat[flights[3]][1] <= mat[flights[couples[i][3]]][0]){
 
-                                    if (mat[flights[2]][2 + flights[2]] + mat[flights[3]][2 + flights[3]] > 
-                                            mat[flights[2]][2 + flights[couples[i][2]]] + 
+                                    if (mat[flights[2]][2 + flights[2]] + mat[flights[3]][2 + flights[3]] >
+                                            mat[flights[2]][2 + flights[couples[i][2]]] +
                                             mat[flights[3]][2 + flights[couples[i][3]]]){
                                                 return true;
                                             }
-                                        
+
                                 }
                             }
                         }
                     }
                 }
             }
-            
+
             return false;
         }
 
 
         bool* air_couple_check(short* airl_pair, unsigned offers){
-            bool* matches = new bool[offers]; 
-            omp_set_num_threads(num_procs);
-            #pragma omp parallel for schedule(dynamic) shared(matches, airl_pair, offers, mat)
-            for (int k = 0; k < offers; k++){
-                
-                if (check_couple_condition(&airl_pair[k*4])){
-                    matches[k] = true;
+
+            bool* matches = new bool[offers];
+
+            if (offers >= 50){
+                omp_set_num_threads(num_procs);
+                #pragma omp parallel for schedule(static) shared(matches, airl_pair, offers, mat)
+                for (int k = 0; k < offers; k++){
+
+                    if (check_couple_condition(&airl_pair[k*4])){
+                        matches[k] = true;
+                    }
+                    else{
+                        matches[k] = false;
+                    }
                 }
-                else{
-                    matches[k] = false;
-                }
+                return matches;
             }
-            return matches;
-            
+            else{
+                for (int k = 0; k < offers; k++){
+                    if (check_couple_condition(&airl_pair[k*4])){
+                        matches[k] = true;
+                    }
+                    else{
+                        matches[k] = false;
+                    }
+                }
+                return matches;
+            }
+
         }
 
 
@@ -140,11 +156,11 @@ class OfferChecker{
                     // first airline eta check
                     if (mat[flights[0]][1] <= mat[flights[triples[i][0]]][0]){
                         if (mat[flights[1]][1] <= mat[flights[triples[i][1]]][0]){
-                            
+
                             //std::cout<<"first"<<std::endl;
 
                             // check first airline's convenience
-                            if (mat[flights[0]][2 + flights[0]] + mat[flights[1]][2 + flights[1]] > 
+                            if (mat[flights[0]][2 + flights[0]] + mat[flights[1]][2 + flights[1]] >
                                     mat[flights[0]][2 + flights[triples[i][0]]] + mat[flights[1]][2 + flights[triples[i][1]]]){
 
 
@@ -156,8 +172,8 @@ class OfferChecker{
 
 
                                         // second convenience check
-                                        if (mat[flights[2]][2 + flights[2]] + mat[flights[3]][2 + flights[3]] > 
-                                                mat[flights[2]][2 + flights[triples[i][2]]] + 
+                                        if (mat[flights[2]][2 + flights[2]] + mat[flights[3]][2 + flights[3]] >
+                                                mat[flights[2]][2 + flights[triples[i][2]]] +
                                                 mat[flights[3]][2 + flights[triples[i][3]]]){
 
 
@@ -167,12 +183,12 @@ class OfferChecker{
                                                 if (mat[flights[5]][1] <= mat[flights[triples[i][5]]][0]){
 
                                                     // third convenience check
-                                                    if (mat[flights[4]][2 + flights[4]] + mat[flights[5]][2 + flights[5]] > 
-                                                            mat[flights[4]][2 + flights[triples[i][4]]] + 
+                                                    if (mat[flights[4]][2 + flights[4]] + mat[flights[5]][2 + flights[5]] >
+                                                            mat[flights[4]][2 + flights[triples[i][4]]] +
                                                             mat[flights[5]][2 + flights[triples[i][5]]]){
                                                                 return true;
                                                             }
-                                                        
+
                                                 }
                                             }
                                         }
@@ -189,22 +205,34 @@ class OfferChecker{
 
         bool* air_triple_check(short* airl_pair, unsigned offers){
 
-            omp_set_num_threads(num_procs);
-
             bool* matches = new bool[offers];
-            #pragma omp parallel for schedule(dynamic) shared(matches, airl_pair, offers, mat)
-            for (int k = 0; k < offers; k++){
-                //std::cout<<k<<std::endl;
-                if (check_triple_condition(&airl_pair[k*6])){
-                    matches[k] = true;
+
+            if (offers >= 50){
+                omp_set_num_threads(num_procs);
+                #pragma omp parallel for schedule(static) shared(matches, airl_pair, offers, mat)
+                for (int k = 0; k < offers; k++){
+                    if (check_triple_condition(&airl_pair[k*6])){
+                        matches[k] = true;
+                    }
+                    else{
+                        matches[k] = false;
+                    }
                 }
-                else{
-                    matches[k] = false;
-                }
+                return matches;
             }
-            //print_mat();
-            return matches;
-            
+            else{
+                for (int k = 0; k < offers; k++){
+                    if (check_triple_condition(&airl_pair[k*6])){
+                        matches[k] = true;
+                    }
+                    else{
+                        matches[k] = false;
+                    }
+                }
+                return matches;
+            }
+
+
         }
             
             

@@ -4,17 +4,16 @@ from typing import List
 
 import numpy as np
 import matplotlib
-from _distutils_hack import override
 from matplotlib import pyplot as plt
 
 
 from Istop.AirlineAndFlight.istopFlight import IstopFlight
-from gurobipy import Model, GRB, quicksum, Env
+from gurobipy import Model, GRB, quicksum
 import networkx as nx
-from networkx.drawing.nx_agraph import write_dot, graphviz_layout
+from networkx.drawing.nx_agraph import graphviz_layout
 
-from Istop.Solvers.bb import BB, Offer
-from Istop.Solvers import bb
+from Istop.old.bb import BB, Offer
+from Istop.old import bb
 from Istop.old.bb_old import get_offers_for_flight
 
 black = "#000000"
@@ -326,3 +325,8 @@ class BBVisual(BB):
         return branch_reduction, solution
 
 
+# bb = BBVisual(offers=self.matches, reductions=self.reductions, flights=self.flights, min_lp_len=1,
+#               print_info=5000, print_tree=5000)
+# bb.run()
+# print("time alg", time.time() - t, "nodes", bb.nodes, "stored", bb.stored)
+# print('lp time', bb.lp_time)

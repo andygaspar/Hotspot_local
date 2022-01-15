@@ -2,19 +2,11 @@ import sys
 import time
 from typing import List
 
-import numpy as np
-import matplotlib
-from _distutils_hack import override
-from matplotlib import pyplot as plt
-
-
 from Istop.AirlineAndFlight.istopFlight import IstopFlight
-from gurobipy import Model, GRB, quicksum, Env
-import networkx as nx
-from networkx.drawing.nx_agraph import write_dot, graphviz_layout
+from gurobipy import Model, GRB, quicksum
 
-from Istop.Solvers.bb import BB, Offer
-from Istop.Solvers import bb
+from Istop.old.bb import BB, Offer
+from Istop.old import bb
 from Istop.old.bb_old import get_offers_for_flight
 
 

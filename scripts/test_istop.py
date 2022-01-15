@@ -25,8 +25,9 @@ schedule_maker = df_to_schedule.RealisticSchedule()
 n_flights = 120
 c_reduction = 0.5
 
-# n_flights = 40
+# n_flights = 50
 
+#13.26097559928894  Number of possible offers:  2019
 
 for i in range(10):
 
