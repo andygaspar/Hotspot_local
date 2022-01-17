@@ -68,6 +68,8 @@ class GurobiSolverOffer:
         self.numOffers = len(self.offers)
         self.reductions = np.array([reductions[i] for i in order])
 
+        print(self.reductions)
+
         self.set_match_for_flight(model.flights)
 
         self.compatibilityMatrix = None
@@ -85,11 +87,18 @@ class GurobiSolverOffer:
 
     def set_constraints(self):
 
-        self.compatibilityMatrix = np.full((self.numOffers, self.numOffers), True, dtype=bool)
+        # self.compatibilityMatrix = np.full((self.numOffers, self.numOffers), True, dtype=bool)
+        # for i, offer in enumerate(self.offers):
+        #     incompatible = np.unique([off for flight in offer.flights for off in flight.offers])
+        #     indexes = [off.num for off in self.offers if off.num not in incompatible]
+        #     self.compatibilityMatrix[i, indexes] = False
+
+        self.compatibilityMatrix = np.zeros((self.numOffers, self.numOffers), dtype=bool)
+
         for i, offer in enumerate(self.offers):
             incompatible = np.unique([off for flight in offer.flights for off in flight.offers])
-            indexes = [off.num for off in self.offers if off.num not in incompatible]
-            self.compatibilityMatrix[i, indexes] = False
+            self.compatibilityMatrix[i, incompatible] = True
+            self.compatibilityMatrix[i, i] = False
 
         for i in range(self.numOffers):
             self.compatibilityMatrix[i, i] = False
@@ -108,8 +117,8 @@ class GurobiSolverOffer:
             self.m.setParam('OutputFlag', 0)
 
         self.set_variables()
-        # if branching:
-        #     self.set_priority()
+        if branching:
+            self.set_priority()
         start = time.time()
         self.set_constraints()
         end = time.time() - start

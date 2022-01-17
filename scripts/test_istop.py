@@ -25,9 +25,18 @@ schedule_maker = df_to_schedule.RealisticSchedule()
 n_flights = 120
 c_reduction = 0.5
 
-# n_flights = 50
+n_flights = 100
 
-#13.26097559928894  Number of possible offers:  2019
+# comp time 1.2084307670593262 5.033677101135254
+# preprocess concluded in sec: 7.642372131347656    Number of possible offers:  535
+# parallel 2.453979730606079 1.0639560222625732
+# Set parameter MIPGap to value 0
+# Constraints setting time  0.038411617279052734
+# Solution time  0.28338003158569336
+# optimal
+# reduction gurobi  2772.056678123593
+
+
 
 for i in range(10):
 

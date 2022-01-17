@@ -19,6 +19,7 @@ import pandas as pd
 import time
 
 # from Istop.Solvers.bb_p import TreeExplorer
+from OfferChecker.offerChecker_parallel import OfferCheckerParallel
 
 class Istop(mS.ModelStructure):
 
@@ -63,6 +64,8 @@ class Istop(mS.ModelStructure):
 
         self.epsilon = sys.float_info.min
         self.offerChecker = OfferChecker(self.scheduleMatrix)
+        # self.offerChecker = OfferCheckerParallel(self.scheduleMatrix, self.flights)
+
         self.reductions = None
 
         self.matches = []
@@ -74,11 +77,12 @@ class Istop(mS.ModelStructure):
         self.problem = None
 
     def check_and_set_matches(self):
-        start = time.time()
+
+        t = time.time()
         self.matches = self.offerChecker.all_couples_check(self.airlines_pairs)
         if self.triples:
             self.matches += self.offerChecker.all_triples_check(self.airlines_triples)
-        t = time.time() - start
+
         for match in self.matches:
             for couple in match:
                 if not self.is_in(couple, self.couples):
@@ -87,10 +91,15 @@ class Istop(mS.ModelStructure):
                         self.flights_in_matches.append(couple[0])
                     if not self.f_in_matched(couple[1]):
                         self.flights_in_matches.append(couple[1])
+        t = time.time() - t
+        print("comp time", self.offerChecker.compTime, t)
+        print("preprocess concluded in sec:", t, "   Number of possible offers: ", len(self.matches))
+        t = time.time()
 
         self.reductions = self.offerChecker.get_reductions(self.matches)
-        print("comp time", self.offerChecker.compTime, t)
-        print("preprocess concluded in sec:", time.time() - start, "   Number of possible offers: ", len(self.matches))
+        t = time.time() - t
+        print("get reduction time", t)
+
         return len(self.matches) > 0
 
     def run(self, max_time=120, timing=False, verbose=False, branching=False):
