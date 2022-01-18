@@ -24,17 +24,9 @@ schedule_maker = df_to_schedule.RealisticSchedule()
 
 n_flights = 120
 c_reduction = 0.5
+mip_gap = 500
 
 n_flights = 100
-
-# comp time 1.2084307670593262 5.033677101135254
-# preprocess concluded in sec: 7.642372131347656    Number of possible offers:  535
-# parallel 2.453979730606079 1.0639560222625732
-# Set parameter MIPGap to value 0
-# Constraints setting time  0.038411617279052734
-# Solution time  0.28338003158569336
-# optimal
-# reduction gurobi  2772.056678123593
 
 
 
@@ -55,6 +47,6 @@ for i in range(10):
         fl_list = udpp_model.get_new_flight_list()
 
         print("istop")
-        istop = Istop(slot_list, fl_list, triples=True)
+        istop = Istop(slot_list, fl_list, triples=True, mip_gap=mip_gap)
         istop.run(timing=True, verbose=False, branching=True)
         # istop.print_performance()

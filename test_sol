@@ -1,9 +1,14 @@
-bb reduction  2911.13970058574
-[array([AFR38, AFR117], dtype=object), array([EZY104, EZY106], dtype=object)]
-[array([AFR57, AFR100], dtype=object), array([DAH81, DAH103], dtype=object)]
-[array([AFR34, AFR88], dtype=object), array([EJU63, EJU80], dtype=object)]
-[array([AFR62, AFR110], dtype=object), array([DAH109, DAH76], dtype=object)]
-[array([AFR24, AFR102], dtype=object), array([VLG21, VLG84], dtype=object)]
-[array([AFR89, AFR95], dtype=object), array([EZY105, EZY18], dtype=object)]
-[array([AFR32, AFR71], dtype=object), array([EJU27, EJU50], dtype=object)]
-[array([AFR33, AFR48], dtype=object), array([LBT29, LBT47], dtype=object)]
+EKCH
+Set parameter Username
+Academic license - for non-commercial use only - expires 2022-10-17
+istop
+[[array([IBK35, IBK39], dtype=object), array([SAS43, SAS42], dtype=object)], [array([IBK35, IBK27], dtype=object), array([SAS47, SAS42], dtype=object)], [array([IBK34, IBK39], dtype=object), array([SAS43, SAS42], dtype=object)], [array([IBK34, IBK39], dtype=object), array([SAS47, SAS42], dtype=object)], [array([IBK34, IBK27], dtype=object), array([SAS47, SAS42], dtype=object)], [array([RYR3, RYR17], dtype=object), array([SAS5, SAS19], dtype=object)], [array([RYR3, RYR24], dtype=object), array([SAS5, SAS26], dtype=object)], [array([SAS23, SAS47], dtype=object), array([VKG32, VKG18], dtype=object)], [array([SAS21, SAS43], dtype=object), array([VKG32, VKG18], dtype=object)], [array([IBK35, IBK34], dtype=object), array([RYR17, RYR38], dtype=object), array([SAS21, SAS47], dtype=object)], [array([IBK34, IBK39], dtype=object), array([RYR1, RYR38], dtype=object), array([SAS47, SAS42], dtype=object)], [array([IBK34, IBK39], dtype=object), array([RYR3, RYR38], dtype=object), array([SAS47, SAS42], dtype=object)], [array([IBK34, IBK39], dtype=object), array([RYR17, RYR38], dtype=object), array([SAS47, SAS42], dtype=object)], [array([IBK34, IBK39], dtype=object), array([RYR24, RYR38], dtype=object), array([SAS47, SAS42], dtype=object)], [array([IBK34, IBK39], dtype=object), array([SAS47, SAS42], dtype=object), array([DTR13, DTR37], dtype=object)], [array([IBK34, IBK27], dtype=object), array([SAS47, SAS42], dtype=object), array([VKG32, VKG18], dtype=object)], [array([IBK35, IBK27], dtype=object), array([SAS43, SAS46], dtype=object), array([AFL31, AFL45], dtype=object)], [array([IBK35, IBK27], dtype=object), array([SAS47, SAS42], dtype=object), array([AFL31, AFL45], dtype=object)], [array([IBK34, IBK27], dtype=object), array([SAS47, SAS42], dtype=object), array([AFL31, AFL45], dtype=object)], [array([RYR17, RYR38], dtype=object), array([SAS8, SAS16], dtype=object), array([DTR13, DTR37], dtype=object)]]
+None
+comp time 0.06335568428039551 0.12741494178771973
+preprocess concluded in sec: 0.12741494178771973    Number of possible offers:  20
+get reduction time 0.10119152069091797
+Set parameter MIPGap to value 0
+Constraints setting time  0.001695871353149414
+Solution time  0.0013146400451660156
+optimal
+reduction gurobi  765.351007629821

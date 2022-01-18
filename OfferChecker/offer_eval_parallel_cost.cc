@@ -81,13 +81,15 @@ class OfferChecker{
         }
 
 
-        bool check_couple_condition(short* flights){
+        double check_couple_condition(short* flights){
              double best_reduction = 0;
              double init_a = mat[flights[0]][2 + flights[0]] + mat[flights[1]][2 + flights[1]];
              double init_b = mat[flights[2]][2 + flights[2]] + mat[flights[3]][2 + flights[3]];
              double init = init_a + init_b;
              double final_a;
              double final_b;
+             double reduction;
+
             for (short i = 0; i< couples_rows; i++){
 
                 // first airline eta check
@@ -96,18 +98,20 @@ class OfferChecker{
 
 
                         // first convenience
-                        final_a = mat[flights[0]][ 2 + flights[couples[i][0]]] + mat[flights[1]][ 2 + flights[couples[i][1]]]
+                        final_a = mat[flights[0]][ 2 + flights[couples[i][0]]] + mat[flights[1]][ 2 + flights[couples[i][1]]];
                         if (init_a > final_a){
 
                             // second eta
                             if (mat[flights[2]][1] <= mat[flights[couples[i][2]]][0]){
                                 if (mat[flights[3]][1] <= mat[flights[couples[i][3]]][0]){
 
-                                    final_b = mat[flights[2]][2 + flights[couples[i][2]]] +
-                                            mat[flights[3]][2 + flights[couples[i][3]]]
+                                    final_b = mat[flights[2]][2 + flights[couples[i][2]]] + mat[flights[3]][2 + flights[couples[i][3]]];
+
                                     if (init_b > final_b){
                                                 reduction = init - final_a - final_b;
-                                                if (reduction > best_reduction) { best_reduction = reduction}
+                                                if (reduction > best_reduction) {
+                                                    best_reduction = reduction;
+                                                    }
                                             }
 
                                 }
@@ -121,22 +125,22 @@ class OfferChecker{
         }
 
 
-        bool* air_couple_check(short* airl_pair, unsigned offers){
-            bool* matches = new bool[offers];
+        double* air_couple_check(short* airl_pair, unsigned offers){
+            double* reductions = new double[offers];
             omp_set_num_threads(num_procs);
-            #pragma omp parallel for schedule(static) shared(matches, airl_pair, offers, mat)
+            #pragma omp parallel for schedule(static) shared(reductions, airl_pair, offers, mat)
             for (int k = 0; k < offers; k++){
 
-                matches[k] = check_couple_condition(&airl_pair[k*4]));
+                reductions[k] = check_couple_condition(&airl_pair[k*4]);
             }
-            return matches;
+            return reductions;
 
         }
 
 
 
 
-         bool check_triple_condition(short* flights){
+         double check_triple_condition(short* flights){
              double best_reduction = 0;
              double init_a = mat[flights[0]][2 + flights[0]] + mat[flights[1]][2 + flights[1]];
              double init_b = mat[flights[2]][2 + flights[2]] + mat[flights[3]][2 + flights[3]];
@@ -145,6 +149,7 @@ class OfferChecker{
              double final_a;
              double final_b;
              double final_c;
+             double reduction;
                 for (int i= 0; i< triples_rows; i++){
 
                     // first airline eta check
@@ -186,22 +191,20 @@ class OfferChecker{
                             }
                         }
                     }
-
                 }
             return best_reduction;
         }
 
 
-        bool* air_triple_check(short* airl_pair, unsigned offers){
+        double* air_triple_check(short* airl_pair, unsigned offers){
 
             omp_set_num_threads(num_procs);
-
-            bool* matches = new bool[offers];
-            #pragma omp parallel for schedule(static) shared(matches, airl_pair, offers, mat)
+            double* reductions = new double[offers];
+            #pragma omp parallel for schedule(static) shared(reductions, airl_pair, offers, mat)
             for (int k = 0; k < offers; k++){
-                matches[k] = check_triple_condition(&airl_pair[k*6]));
+                reductions[k] = check_triple_condition(&airl_pair[k*6]);
             }
-            return matches;
+            return reductions;
         }
 
 
@@ -216,8 +219,8 @@ extern "C" {
     OfferChecker* OfferChecker_(double* schedule_mat, short row, short col, short* coup, short coup_row, short coup_col,
                                 short* trip, short trip_row, short trip_col, short n_procs)
     {return new OfferChecker(schedule_mat,row, col, coup, coup_row, coup_col, trip, trip_row, trip_col, n_procs); }
-    bool* air_couple_check_(OfferChecker* off,short* airl_pair, unsigned offers) {return off->air_couple_check(airl_pair, offers);}
-    bool* air_triple_check_(OfferChecker* off,short* airl_pair, unsigned offers) {return off->air_triple_check(airl_pair, offers);}
+    double* air_couple_check_(OfferChecker* off,short* airl_pair, unsigned offers) {return off->air_couple_check(airl_pair, offers);}
+    double* air_triple_check_(OfferChecker* off,short* airl_pair, unsigned offers) {return off->air_triple_check(airl_pair, offers);}
 
     bool check_couple_condition_(OfferChecker* off, short* flights) {return off->check_couple_condition(flights);}
     bool check_triple_condition_(OfferChecker* off, short* flights) {return off->check_triple_condition(flights);}

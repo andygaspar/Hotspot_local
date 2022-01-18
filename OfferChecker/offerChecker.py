@@ -30,7 +30,7 @@ def air_triple_check(air_triple):
     return input_vector, air_trips
 
 
-class OfferCheckerParallel(object):
+class OfferChecker(object):
 
     def __init__(self, schedule_mat, flights):
         os.system('./OfferChecker/install_parallel.sh')
@@ -196,8 +196,8 @@ class OfferCheckerParallel(object):
     def get_reductions(self, matches):
         reductions = []
         for match in matches:
-            shift = len(match)
-            if shift == 2:
+            couple = (len(match) == 2)
+            if couple:
                 all_fl_in_offer = [fl for tup in match for fl in tup]
                 init_cost_a = sum(flight.fitCostVect[flight.slot.index] for flight in match[0])
                 init_cost_b = sum(flight.fitCostVect[flight.slot.index] for flight in match[1])
@@ -207,7 +207,7 @@ class OfferCheckerParallel(object):
                     if np.prod(flight.etaSlot <= all_fl_in_offer[perm[i]].slot for i, flight in enumerate(all_fl_in_offer)):
                         final_cost_a = sum(flight.fitCostVect[[all_fl_in_offer[perm[i]].slot.index]][0]
                                            for i, flight in enumerate(match[0]))
-                        final_cost_b = sum(flight.fitCostVect[[all_fl_in_offer[perm[i + shift]].slot.index]][0]
+                        final_cost_b = sum(flight.fitCostVect[[all_fl_in_offer[perm[i + 2]].slot.index]][0]
                                            for i, flight in enumerate(match[1]))
                         offer_reduction = init_cost - final_cost_b - final_cost_a
                         if final_cost_a < init_cost_a and final_cost_b < init_cost_b \
@@ -227,9 +227,9 @@ class OfferCheckerParallel(object):
                                enumerate(all_fl_in_offer)):
                         final_cost_a = sum(flight.fitCostVect[[all_fl_in_offer[perm[i]].slot.index]][0]
                                            for i, flight in enumerate(match[0]))
-                        final_cost_b = sum(flight.fitCostVect[[all_fl_in_offer[perm[i + shift]].slot.index]][0]
+                        final_cost_b = sum(flight.fitCostVect[[all_fl_in_offer[perm[i + 2]].slot.index]][0]
                                            for i, flight in enumerate(match[1]))
-                        final_cost_c = sum(flight.fitCostVect[[all_fl_in_offer[perm[i + shift]].slot.index]][0]
+                        final_cost_c = sum(flight.fitCostVect[[all_fl_in_offer[perm[i + 4]].slot.index]][0]
                                            for i, flight in enumerate(match[2]))
                         offer_reduction = init_cost - final_cost_b - final_cost_a - final_cost_c
                         if final_cost_a < init_cost_a and final_cost_b < init_cost_b and final_cost_c < init_cost_c \

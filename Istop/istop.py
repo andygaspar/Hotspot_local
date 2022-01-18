@@ -39,7 +39,7 @@ class Istop(mS.ModelStructure):
             j += 1
         return indexes
 
-    def __init__(self, slot_list: List[Slot], flights: List[Flight], triples=False):
+    def __init__(self, slot_list: List[Slot], flights: List[Flight], triples=False, mip_gap=0):
         self.offers = None
         self.triples = triples
 
@@ -63,7 +63,7 @@ class Istop(mS.ModelStructure):
         self.airlines_triples = np.array(list(combinations(self.airlines, 3)))
 
         self.epsilon = sys.float_info.min
-        # self.offerChecker = OfferChecker(self.scheduleMatrix)
+        # self.offerChecker = OfferChecker(self.scheduleMatrix, self.flights)
         self.offerChecker = OfferCheckerParallel(self.scheduleMatrix, self.flights)
 
         self.reductions = None
@@ -75,13 +75,24 @@ class Istop(mS.ModelStructure):
         self.offers_selected = []
 
         self.problem = None
+        self.mipGap = mip_gap
 
     def check_and_set_matches(self):
 
         t = time.time()
-        self.matches = self.offerChecker.all_couples_check(self.airlines_pairs)
+        self.matches, self.reductions = self.offerChecker.all_couples_check(self.airlines_pairs)
         if self.triples:
-            self.matches += self.offerChecker.all_triples_check(self.airlines_triples)
+            matches, reductions = self.offerChecker.all_triples_check(self.airlines_triples)
+            self.matches += matches
+            self.reductions = np.append(self.reductions, reductions)
+
+        # t = time.time()
+        # self.matches = self.offerChecker.all_couples_check(self.airlines_pairs)
+        # if self.triples:
+        #     self.matches += self.offerChecker.all_triples_check(self.airlines_triples)
+
+        # print(self.matches)
+        # print(self.reductions)
 
         for match in self.matches:
             for couple in match:
@@ -94,18 +105,14 @@ class Istop(mS.ModelStructure):
         t = time.time() - t
         print("comp time", self.offerChecker.compTime, t)
         print("preprocess concluded in sec:", t, "   Number of possible offers: ", len(self.matches))
-        t = time.time()
-
-        self.reductions = self.offerChecker.get_reductions(self.matches)
-        t = time.time() - t
-        print("get reduction time", t)
 
         return len(self.matches) > 0
 
     def run(self, max_time=120, timing=False, verbose=False, branching=False):
         feasible = self.check_and_set_matches()
         if feasible:
-            g_offer_solver = GurobiSolverOffer(self, offers=self.matches, reductions=self.reductions)
+            g_offer_solver = GurobiSolverOffer(
+                self, offers=self.matches, reductions=self.reductions, mip_gap=self.mipGap)
             g_offer_solver.run(timing=True)
             print("reduction gurobi ", g_offer_solver.m.getObjective().getValue())
 
