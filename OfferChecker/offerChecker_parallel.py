@@ -91,13 +91,13 @@ class OfferCheckerParallel(object):
 
         len_array = int(len(input_vect) / 4)
         if len_array > 0:
-            self.lib.air_couple_check_.restype = ndpointer(dtype=ctypes.c_bool, shape=(len_array,))
+            self.lib.air_couple_check_.restype = ndpointer(dtype=ctypes.c_double, shape=(len_array,))
 
             t = time.time()
             answer = self.lib.air_couple_check_(ctypes.c_void_p(self.obj),
                                                 ctypes.c_void_p(input_vect.ctypes.data), ctypes.c_uint(len_array))
             self.compTime += time.time() - t
-            return [self.get_flights(air_pairs[i]) for i in range(len_array) if answer[i]]
+            return [self.get_flights(air_pairs[i]) for i in range(len_array) if answer[i] > 0.1]
         else:
             return []
 
