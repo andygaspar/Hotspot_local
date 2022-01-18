@@ -115,34 +115,19 @@ class OfferChecker{
 
 
         bool* air_couple_check(short* airl_pair, unsigned offers){
-
             bool* matches = new bool[offers];
+            omp_set_num_threads(num_procs);
+            #pragma omp parallel for schedule(static) shared(matches, airl_pair, offers, mat)
+            for (int k = 0; k < offers; k++){
 
-            if (offers >= 50){
-                omp_set_num_threads(num_procs);
-                #pragma omp parallel for schedule(static) shared(matches, airl_pair, offers, mat)
-                for (int k = 0; k < offers; k++){
-
-                    if (check_couple_condition(&airl_pair[k*4])){
-                        matches[k] = true;
-                    }
-                    else{
-                        matches[k] = false;
-                    }
+                if (check_couple_condition(&airl_pair[k*4])){
+                    matches[k] = true;
                 }
-                return matches;
-            }
-            else{
-                for (int k = 0; k < offers; k++){
-                    if (check_couple_condition(&airl_pair[k*4])){
-                        matches[k] = true;
-                    }
-                    else{
-                        matches[k] = false;
-                    }
+                else{
+                    matches[k] = false;
                 }
-                return matches;
             }
+            return matches;
 
         }
 
@@ -205,56 +190,41 @@ class OfferChecker{
 
         bool* air_triple_check(short* airl_pair, unsigned offers){
 
+            omp_set_num_threads(num_procs);
+
             bool* matches = new bool[offers];
-
-            if (offers >= 50){
-                omp_set_num_threads(num_procs);
-                #pragma omp parallel for schedule(static) shared(matches, airl_pair, offers, mat)
-                for (int k = 0; k < offers; k++){
-                    if (check_triple_condition(&airl_pair[k*6])){
-                        matches[k] = true;
-                    }
-                    else{
-                        matches[k] = false;
-                    }
+            #pragma omp parallel for schedule(static) shared(matches, airl_pair, offers, mat)
+            for (int k = 0; k < offers; k++){
+                if (check_triple_condition(&airl_pair[k*6])){
+                    matches[k] = true;
                 }
-                return matches;
-            }
-            else{
-                for (int k = 0; k < offers; k++){
-                    if (check_triple_condition(&airl_pair[k*6])){
-                        matches[k] = true;
-                    }
-                    else{
-                        matches[k] = false;
-                    }
+                else{
+                    matches[k] = false;
                 }
-                return matches;
             }
-
-
+            return matches;
         }
-            
-            
-
-         
-
-}; 
 
 
 
-extern "C" { 
-    OfferChecker* OfferChecker_(double* schedule_mat, short row, short col, short* coup, short coup_row, short coup_col, 
+
+
+};
+
+
+
+extern "C" {
+    OfferChecker* OfferChecker_(double* schedule_mat, short row, short col, short* coup, short coup_row, short coup_col,
                                 short* trip, short trip_row, short trip_col, short n_procs)
-    {return new OfferChecker(schedule_mat,row, col, coup, coup_row, coup_col, trip, trip_row, trip_col, n_procs); } 
+    {return new OfferChecker(schedule_mat,row, col, coup, coup_row, coup_col, trip, trip_row, trip_col, n_procs); }
     bool* air_couple_check_(OfferChecker* off,short* airl_pair, unsigned offers) {return off->air_couple_check(airl_pair, offers);}
     bool* air_triple_check_(OfferChecker* off,short* airl_pair, unsigned offers) {return off->air_triple_check(airl_pair, offers);}
 
     bool check_couple_condition_(OfferChecker* off, short* flights) {return off->check_couple_condition(flights);}
     bool check_triple_condition_(OfferChecker* off, short* flights) {return off->check_triple_condition(flights);}
-    
+
     void print_mat_(OfferChecker* off){ off -> print_mat(); }
-    void print_couples_(OfferChecker* off){ off -> print_couples(); } 
-    void print_triples_(OfferChecker* off){ off -> print_triples(); } 
+    void print_couples_(OfferChecker* off){ off -> print_couples(); }
+    void print_triples_(OfferChecker* off){ off -> print_triples(); }
 
 }

@@ -63,8 +63,8 @@ class Istop(mS.ModelStructure):
         self.airlines_triples = np.array(list(combinations(self.airlines, 3)))
 
         self.epsilon = sys.float_info.min
-        self.offerChecker = OfferChecker(self.scheduleMatrix)
-        # self.offerChecker = OfferCheckerParallel(self.scheduleMatrix, self.flights)
+        # self.offerChecker = OfferChecker(self.scheduleMatrix)
+        self.offerChecker = OfferCheckerParallel(self.scheduleMatrix, self.flights)
 
         self.reductions = None
 

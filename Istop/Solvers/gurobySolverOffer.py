@@ -47,7 +47,7 @@ class GurobiSolverOffer:
         self.m = Model('CVRP')
         # self.m.setParam('Method', 2) ###################testare == 2 !!!!!!!!!!!!111c
         self.m.modelSense = GRB.MAXIMIZE
-        self.m.setParam('MIPGap', 0)
+        self.m.setParam('MIPGap', 500)
 
         self.flights = model.flights
         self.airlines = model.airlines
