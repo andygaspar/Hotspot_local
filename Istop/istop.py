@@ -11,15 +11,13 @@ from itertools import combinations
 from Istop.AirlineAndFlight.istopAirline import IstopAirline
 from ModelStructure.Flight.flight import Flight
 from ModelStructure.Slot.slot import Slot
-from OfferChecker.offerChecker import OfferChecker
 
 import numpy as np
 import pandas as pd
 
 import time
 
-# from Istop.Solvers.bb_p import TreeExplorer
-from OfferChecker.offerChecker_parallel import OfferCheckerParallel
+from OfferChecker.offerChecker import OfferChecker
 
 class Istop(mS.ModelStructure):
 
@@ -63,8 +61,7 @@ class Istop(mS.ModelStructure):
         self.airlines_triples = np.array(list(combinations(self.airlines, 3)))
 
         self.epsilon = sys.float_info.min
-        # self.offerChecker = OfferChecker(self.scheduleMatrix, self.flights)
-        self.offerChecker = OfferCheckerParallel(self.scheduleMatrix, self.flights)
+        self.offerChecker = OfferChecker(self.scheduleMatrix, self.flights)
 
         self.reductions = None
 
@@ -85,14 +82,6 @@ class Istop(mS.ModelStructure):
             matches, reductions = self.offerChecker.all_triples_check(self.airlines_triples)
             self.matches += matches
             self.reductions = np.append(self.reductions, reductions)
-
-        # t = time.time()
-        # self.matches = self.offerChecker.all_couples_check(self.airlines_pairs)
-        # if self.triples:
-        #     self.matches += self.offerChecker.all_triples_check(self.airlines_triples)
-
-        # print(self.matches)
-        # print(self.reductions)
 
         for match in self.matches:
             for couple in match:

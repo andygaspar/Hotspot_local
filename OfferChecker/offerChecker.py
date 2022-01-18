@@ -33,7 +33,7 @@ def air_triple_check(air_triple):
 class OfferChecker(object):
 
     def __init__(self, schedule_mat, flights):
-        os.system('./OfferChecker/install_parallel.sh')
+        # os.system('./OfferChecker/install_parallel.sh')
         self.numProcs = os.cpu_count()
         self.lib = ctypes.CDLL('./OfferChecker/liboffers_parallel.so')
         self.lib.OfferChecker_.argtypes = [ctypes.c_void_p, ctypes.c_short, ctypes.c_short,
@@ -91,15 +91,17 @@ class OfferChecker(object):
 
         len_array = int(len(input_vect) / 4)
         if len_array > 0:
-            self.lib.air_couple_check_.restype = ndpointer(dtype=ctypes.c_bool, shape=(len_array,))
+            self.lib.air_couple_check_.restype = ndpointer(dtype=ctypes.c_double, shape=(len_array,))
 
             t = time.time()
-            answer = self.lib.air_couple_check_(ctypes.c_void_p(self.obj),
+            reductions = self.lib.air_couple_check_(ctypes.c_void_p(self.obj),
                                                 ctypes.c_void_p(input_vect.ctypes.data), ctypes.c_uint(len_array))
             self.compTime += time.time() - t
-            return [self.get_flights(air_pairs[i]) for i in range(len_array) if answer[i]]
+            idxs = [i for i in range(len_array) if reductions[i] > 0.1]
+
+            return [self.get_flights(air_pairs[i]) for i in idxs], reductions[idxs]
         else:
-            return []
+            return [], []
 
     def all_triples_check(self, airlines_triples):
         airlines_triples = [triple for triple in airlines_triples
@@ -115,15 +117,17 @@ class OfferChecker(object):
         len_array = int(len(input_vect) / 6)
 
         if len_array > 0:
-            self.lib.air_triple_check_.restype = ndpointer(dtype=ctypes.c_bool, shape=(len_array,))
+            self.lib.air_triple_check_.restype = ndpointer(dtype=ctypes.c_double, shape=(len_array,))
 
             t = time.time()
-            answer = self.lib.air_triple_check_(ctypes.c_void_p(self.obj),
+            reductions = self.lib.air_triple_check_(ctypes.c_void_p(self.obj),
                                                 ctypes.c_void_p(input_vect.ctypes.data), ctypes.c_uint(len_array))
             self.compTime += time.time() - t
-            return [self.get_flights(air_trips[i]) for i in range(len_array) if answer[i]]
+
+            idxs = [i for i in range(len_array) if reductions[i] > 0.1]
+            return [self.get_flights(air_trips[i]) for i in idxs], reductions[idxs]
         else:
-            return []
+            return [], []
 
 
     def check_couple_in_pairs(self, couple, airlines_pairs):
@@ -232,6 +236,7 @@ class OfferChecker(object):
                         final_cost_c = sum(flight.fitCostVect[[all_fl_in_offer[perm[i + 4]].slot.index]][0]
                                            for i, flight in enumerate(match[2]))
                         offer_reduction = init_cost - final_cost_b - final_cost_a - final_cost_c
+
                         if final_cost_a < init_cost_a and final_cost_b < init_cost_b and final_cost_c < init_cost_c \
                                 and offer_reduction > best_offer_reduction:
                             best_offer_reduction = offer_reduction
