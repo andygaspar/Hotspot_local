@@ -1,5 +1,7 @@
 from typing import List
 
+from matplotlib import pyplot as plt
+
 from Istop.AirlineAndFlight.istopFlight import IstopFlight
 from Istop.Solvers.gurobySolverOffer import GurobiSolverOffer
 # from Istop.Solvers.mip_solver import MipSolver
@@ -17,6 +19,7 @@ import pandas as pd
 
 import time
 
+from ModelStructure.Solution import solution
 from OfferChecker.offerChecker import OfferChecker
 
 class Istop(mS.ModelStructure):
@@ -102,34 +105,15 @@ class Istop(mS.ModelStructure):
         if feasible:
             g_offer_solver = GurobiSolverOffer(
                 self, offers=self.matches, reductions=self.reductions, mip_gap=self.mipGap)
-            g_offer_solver.run(timing=True)
+            plt.hist([of.reduction for of in g_offer_solver.offers], density=True, bins=20)
+            plt.show()
+            offer_solution = g_offer_solver.run(timing=True)
             print("reduction gurobi ", g_offer_solver.m.getObjective().getValue())
 
+            solution_assignment = self.offerChecker.get_solution_assignemnt(offer_solution)
+            self.assign_flights(solution_assignment)
 
-
-
-        # if feasible:
-        #     t = time.time()
-        #     self.problem = GurobiSolver(self)
-        #     solution_vect, offers_vect = self.problem.run(timing=timing, verbose=verbose, branching=branching)
-        #     print("time Gurobi", time.time()-t)
-        #
-        #     self.assign_flights(solution_vect)
-        #
-        #     print("gurobi solution")
-        #     offers = 0
-        #     for i in range(len(self.matches)):
-        #         if offers_vect[i] > 0.9:
-        #             self.offers_selected.append(self.matches[i])
-        #             # print(self.matches[i])
-        #             offers += 1
-        #     print("Number of offers selected: ", offers)
-
-
-
-
-
-
+            solution.make_solution(self)
 
     def other_airlines_compatible_slots(self, flight):
         others_slots = []
@@ -166,55 +150,12 @@ class Istop(mS.ModelStructure):
                 return True
         return False
 
-    def assign_flights(self, solution_vect):
+    def assign_flights(self, solution_assignment):
+        assigned_flights = []
+        for tup in solution_assignment:
+            assigned_flights.append(tup[0])
+            tup[0].newSlot = tup[1]
+
         for flight in self.flights:
-            for slot in self.slots:
-                if solution_vect[flight.slot.index, slot.index] > 0.9:
-                    flight.newSlot = slot
-
-
-"""
-rows 936
-problem status, explained:  mip_optimal 27612.33615924535
-rows 936
-sets 0
-setmembers 0
-elems 8140
-primalinfeas 0
-dualinfeas 0
-simplexiter 42033
-lpstatus 1
-mipstatus 6
-cuts 0
-nodes 99
-nodedepth 1
-activenodes 0
-mipsolnode 1042
-mipsols 14
-cols 2545
-sparerows 793
-sparecols 0
-spareelems 2968
-sparemipents 315
-errorcode 0
-mipinfeas 132
-presolvestate 1310881
-parentnode 0
-namelength 1
-qelems 0
-numiis 0
-mipents 2545
-branchvar 0
-mipthreadid 0
-algorithm 2
-time 1
-originalrows 936
-callbackcount_optnode 0
-callbackcount_cutmgr 0
-systemmemory 1596327
-originalqelems 0
-maxprobnamelength 1024
-stopstatus 0
-originalmipents 2545
-
-"""
+            if flight not in assigned_flights:
+                flight.newSlot = flight.slot

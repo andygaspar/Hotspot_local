@@ -197,8 +197,10 @@ class OfferChecker(object):
     def print_triples(self):
         self.lib.print_triples_(self.obj)
 
-    def get_reductions(self, matches):
-        reductions = []
+    def get_solution_assignemnt(self, matches):
+
+        solution_assignment = []
+
         for match in matches:
             couple = (len(match) == 2)
             if couple:
@@ -208,7 +210,8 @@ class OfferChecker(object):
                 init_cost = init_cost_a + init_cost_b
                 best_offer_reduction = 0
                 for perm in self.couples:
-                    if np.prod(flight.etaSlot <= all_fl_in_offer[perm[i]].slot for i, flight in enumerate(all_fl_in_offer)):
+                    if np.prod(flight.etaSlot <= all_fl_in_offer[perm[i]].slot for i, flight in
+                               enumerate(all_fl_in_offer)):
                         final_cost_a = sum(flight.fitCostVect[[all_fl_in_offer[perm[i]].slot.index]][0]
                                            for i, flight in enumerate(match[0]))
                         final_cost_b = sum(flight.fitCostVect[[all_fl_in_offer[perm[i + 2]].slot.index]][0]
@@ -217,7 +220,7 @@ class OfferChecker(object):
                         if final_cost_a < init_cost_a and final_cost_b < init_cost_b \
                                 and offer_reduction > best_offer_reduction:
                             best_offer_reduction = offer_reduction
-                reductions.append(best_offer_reduction)
+                            assignment = perm
 
             else:
                 all_fl_in_offer = [fl for tup in match for fl in tup]
@@ -240,6 +243,12 @@ class OfferChecker(object):
                         if final_cost_a < init_cost_a and final_cost_b < init_cost_b and final_cost_c < init_cost_c \
                                 and offer_reduction > best_offer_reduction:
                             best_offer_reduction = offer_reduction
-                reductions.append(best_offer_reduction)
+                            assignment = perm
 
-        return reductions
+            flights = [fl for m in match for fl in m]
+            slots = [fl.slot for fl in flights]
+
+            for i, fl in enumerate(flights):
+                solution_assignment.append((fl, slots[assignment[i]]))
+
+        return solution_assignment
