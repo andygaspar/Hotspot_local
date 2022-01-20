@@ -1,14 +1,205 @@
+/home/andrea/Scrivania/Hotspot_/venv/bin/python /home/andrea/Scrivania/Hotspot_/scripts/test_istop.py
+0 ++****************************************************
 EKCH
 Set parameter Username
 Academic license - for non-commercial use only - expires 2022-10-17
 istop
-[[array([IBK35, IBK39], dtype=object), array([SAS43, SAS42], dtype=object)], [array([IBK35, IBK27], dtype=object), array([SAS47, SAS42], dtype=object)], [array([IBK34, IBK39], dtype=object), array([SAS43, SAS42], dtype=object)], [array([IBK34, IBK39], dtype=object), array([SAS47, SAS42], dtype=object)], [array([IBK34, IBK27], dtype=object), array([SAS47, SAS42], dtype=object)], [array([RYR3, RYR17], dtype=object), array([SAS5, SAS19], dtype=object)], [array([RYR3, RYR24], dtype=object), array([SAS5, SAS26], dtype=object)], [array([SAS23, SAS47], dtype=object), array([VKG32, VKG18], dtype=object)], [array([SAS21, SAS43], dtype=object), array([VKG32, VKG18], dtype=object)], [array([IBK35, IBK34], dtype=object), array([RYR17, RYR38], dtype=object), array([SAS21, SAS47], dtype=object)], [array([IBK34, IBK39], dtype=object), array([RYR1, RYR38], dtype=object), array([SAS47, SAS42], dtype=object)], [array([IBK34, IBK39], dtype=object), array([RYR3, RYR38], dtype=object), array([SAS47, SAS42], dtype=object)], [array([IBK34, IBK39], dtype=object), array([RYR17, RYR38], dtype=object), array([SAS47, SAS42], dtype=object)], [array([IBK34, IBK39], dtype=object), array([RYR24, RYR38], dtype=object), array([SAS47, SAS42], dtype=object)], [array([IBK34, IBK39], dtype=object), array([SAS47, SAS42], dtype=object), array([DTR13, DTR37], dtype=object)], [array([IBK34, IBK27], dtype=object), array([SAS47, SAS42], dtype=object), array([VKG32, VKG18], dtype=object)], [array([IBK35, IBK27], dtype=object), array([SAS43, SAS46], dtype=object), array([AFL31, AFL45], dtype=object)], [array([IBK35, IBK27], dtype=object), array([SAS47, SAS42], dtype=object), array([AFL31, AFL45], dtype=object)], [array([IBK34, IBK27], dtype=object), array([SAS47, SAS42], dtype=object), array([AFL31, AFL45], dtype=object)], [array([RYR17, RYR38], dtype=object), array([SAS8, SAS16], dtype=object), array([DTR13, DTR37], dtype=object)]]
-None
-comp time 0.06335568428039551 0.12741494178771973
-preprocess concluded in sec: 0.12741494178771973    Number of possible offers:  20
-get reduction time 0.10119152069091797
-Set parameter MIPGap to value 0
-Constraints setting time  0.001695871353149414
-Solution time  0.0013146400451660156
+comp time 0.05558180809020996 0.12619948387145996
+preprocess concluded in sec: 0.12619948387145996    Number of possible offers:  20
+Set parameter MIPGap to value 100
+Constraints setting time  0.0020096302032470703
+Solution time  8.344650268554688e-05
 optimal
-reduction gurobi  765.351007629821
+reduction gurobi  759.6008327787872
+1 ++****************************************************
+EGCC
+istop
+comp time 0.12738370895385742 0.2876312732696533
+preprocess concluded in sec: 0.2876312732696533    Number of possible offers:  113
+Set parameter MIPGap to value 100
+Constraints setting time  0.0049474239349365234
+Solution time  0.0002942085266113281
+optimal
+reduction gurobi  948.2192144543944
+2 ++****************************************************
+LTFM
+istop
+comp time 0.005452394485473633 0.014633655548095703
+preprocess concluded in sec: 0.014633655548095703    Number of possible offers:  11
+Set parameter MIPGap to value 100
+Constraints setting time  0.002361297607421875
+Solution time  0.00010347366333007812
+optimal
+reduction gurobi  222.10196793336115
+3 ++****************************************************
+EGKK
+istop
+comp time 0.10509228706359863 0.23177194595336914
+preprocess concluded in sec: 0.23177194595336914    Number of possible offers:  77
+Set parameter MIPGap to value 100
+Constraints setting time  0.0037415027618408203
+Solution time  0.00017905235290527344
+optimal
+reduction gurobi  909.9421864079081
+4 ++****************************************************
+EHAM
+istop
+comp time 0.017551422119140625 0.0394284725189209
+preprocess concluded in sec: 0.0394284725189209    Number of possible offers:  4
+Set parameter MIPGap to value 100
+Constraints setting time  0.0014276504516601562
+Solution time  0.00010037422180175781
+optimal
+reduction gurobi  180.20622115765582
+5 ++****************************************************
+EGSS
+istop
+comp time 0.0065212249755859375 0.017503738403320312
+preprocess concluded in sec: 0.017503738403320312    Number of possible offers:  9
+Set parameter MIPGap to value 100
+Constraints setting time  0.0014190673828125
+Solution time  0.00013566017150878906
+optimal
+reduction gurobi  161.58724151051388
+6 ++****************************************************
+LIMC
+istop
+comp time 0.013358831405639648 0.03274679183959961
+preprocess concluded in sec: 0.03274679183959961    Number of possible offers:  21
+Set parameter MIPGap to value 100
+Constraints setting time  0.0017900466918945312
+Solution time  8.559226989746094e-05
+optimal
+reduction gurobi  119.7802687207757
+7 ++****************************************************
+LEBL
+istop
+comp time 0.04408001899719238 0.10248231887817383
+preprocess concluded in sec: 0.10248231887817383    Number of possible offers:  64
+Set parameter MIPGap to value 100
+Constraints setting time  0.002910137176513672
+Solution time  0.0001857280731201172
+optimal
+reduction gurobi  1292.9971933073655
+8 ++****************************************************
+EDDL
+istop
+comp time 0.03748178482055664 0.08873248100280762
+preprocess concluded in sec: 0.08873248100280762    Number of possible offers:  31
+Set parameter MIPGap to value 100
+Constraints setting time  0.002736806869506836
+Solution time  0.0001308917999267578
+optimal
+reduction gurobi  318.5459364300664
+9 ++****************************************************
+EHAM
+istop
+comp time 0.028631925582885742 0.06861066818237305
+preprocess concluded in sec: 0.06861066818237305    Number of possible offers:  37
+Set parameter MIPGap to value 100
+Constraints setting time  0.002264738082885742
+Solution time  0.00010371208190917969
+optimal
+reduction gurobi  460.23098603238793
+10 ++****************************************************
+EDDM
+istop
+comp time 0.012827873229980469 0.03380775451660156
+preprocess concluded in sec: 0.03380775451660156    Number of possible offers:  10
+Set parameter MIPGap to value 100
+Constraints setting time  0.0015559196472167969
+Solution time  0.00010776519775390625
+optimal
+reduction gurobi  883.4165047026845
+11 ++****************************************************
+EDDF
+istop
+comp time 0.012502193450927734 0.031545162200927734
+preprocess concluded in sec: 0.031545162200927734    Number of possible offers:  21
+Set parameter MIPGap to value 100
+Constraints setting time  0.0024216175079345703
+Solution time  0.00011157989501953125
+optimal
+reduction gurobi  247.16684178703278
+12 ++****************************************************
+LIMC
+istop
+comp time 0.014448881149291992 0.049872398376464844
+preprocess concluded in sec: 0.049872398376464844    Number of possible offers:  24
+Set parameter MIPGap to value 100
+Constraints setting time  0.001957416534423828
+Solution time  9.632110595703125e-05
+optimal
+reduction gurobi  877.4070342661623
+13 ++****************************************************
+EGLL
+istop
+comp time 0.03463864326477051 0.08118462562561035
+preprocess concluded in sec: 0.08118462562561035    Number of possible offers:  22
+Set parameter MIPGap to value 100
+Constraints setting time  0.0021626949310302734
+Solution time  9.822845458984375e-05
+optimal
+reduction gurobi  1970.5167439607987
+14 ++****************************************************
+LGAV
+istop
+comp time 0.13432955741882324 0.2614753246307373
+preprocess concluded in sec: 0.2614753246307373    Number of possible offers:  67
+Set parameter MIPGap to value 100
+Constraints setting time  0.0037107467651367188
+Solution time  0.00018405914306640625
+optimal
+reduction gurobi  1840.89117121639
+15 ++****************************************************
+EGCC
+istop
+comp time 0.07487607002258301 0.16840362548828125
+preprocess concluded in sec: 0.16840362548828125    Number of possible offers:  71
+Set parameter MIPGap to value 100
+Constraints setting time  0.00639653205871582
+Solution time  0.0002052783966064453
+optimal
+reduction gurobi  1351.3875659482064
+16 ++****************************************************
+LEBL
+istop
+comp time 0.022782087326049805 0.05788445472717285
+preprocess concluded in sec: 0.05788445472717285    Number of possible offers:  7
+Set parameter MIPGap to value 100
+Constraints setting time  0.0017666816711425781
+Solution time  7.605552673339844e-05
+optimal
+reduction gurobi  80.91227478990959
+17 ++****************************************************
+LEBL
+istop
+comp time 0.04024648666381836 0.08521413803100586
+preprocess concluded in sec: 0.08521413803100586    Number of possible offers:  35
+Set parameter MIPGap to value 100
+Constraints setting time  0.00262451171875
+Solution time  0.00012111663818359375
+optimal
+reduction gurobi  236.8621520062893
+18 ++****************************************************
+EDDM
+istop
+comp time 0.006662607192993164 0.017798662185668945
+preprocess concluded in sec: 0.017798662185668945    Number of possible offers:  32
+Set parameter MIPGap to value 100
+Constraints setting time  0.0025243759155273438
+Solution time  0.00011539459228515625
+optimal
+reduction gurobi  383.6611077105863
+19 ++****************************************************
+EBBR
+istop
+comp time 0.0227358341217041 0.05147504806518555
+preprocess concluded in sec: 0.05147504806518555    Number of possible offers:  30
+Set parameter MIPGap to value 100
+Constraints setting time  0.0022742748260498047
+Solution time  0.00010514259338378906
+optimal
+reduction gurobi  448.7776351353601
+
+Process finished with exit code 0

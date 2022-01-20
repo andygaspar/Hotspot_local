@@ -60,6 +60,8 @@ class Istop(mS.ModelStructure):
         for airline in self.airlines:
             airline.set_and_standardise_fit_vect()
 
+        self.scheduleMatrix = self.set_schedule_matrix()
+
         self.airlines_pairs = np.array(list(combinations(self.airlines, 2)))
         self.airlines_triples = np.array(list(combinations(self.airlines, 3)))
 
@@ -105,8 +107,8 @@ class Istop(mS.ModelStructure):
         if feasible:
             g_offer_solver = GurobiSolverOffer(
                 self, offers=self.matches, reductions=self.reductions, mip_gap=self.mipGap)
-            plt.hist([of.reduction for of in g_offer_solver.offers], density=True, bins=20)
-            plt.show()
+            # plt.hist([of.reduction for of in g_offer_solver.offers], density=True, bins=20)
+            # plt.show()
             offer_solution = g_offer_solver.run(timing=True)
             print("reduction gurobi ", g_offer_solver.m.getObjective().getValue())
 
@@ -159,3 +161,10 @@ class Istop(mS.ModelStructure):
         for flight in self.flights:
             if flight not in assigned_flights:
                 flight.newSlot = flight.slot
+
+    def set_schedule_matrix(self):
+        arr = []
+        flight: IstopFlight
+        for flight in self.flights:
+            arr.append([flight.slot.time] + [flight.eta] + list(flight.standardisedVector))
+        return np.array(arr)
