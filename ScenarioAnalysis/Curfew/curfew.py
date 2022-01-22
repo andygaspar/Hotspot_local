@@ -1,13 +1,16 @@
 import pandas as pd
 
-flights = pd.read_csv("Flights/flights_complete.csv")
-df_curfew = pd.read_csv("Curfew/curfew.csv")
+flights = pd.read_csv("ScenarioAnalysis/Flights/flights_complete.csv")
+df_curfew = pd.read_csv("ScenarioAnalysis/Curfew/curfew.csv")
 
 
 def get_curfew_threshold(airport, airline, air_cluster, eta, min_turnaround):
     df_fl = flights[(flights.Destination == airport) & (flights.Company == airline)
                     & (flights.aircraft_cluster == air_cluster)
                     & (eta - 60 <= flights.arr_min) & (flights.arr_min <= eta + 60)]
+
+    if df_fl.shape[0] == 0:
+        return None
 
     fl_random = df_fl.sample(1)
     registration = fl_random.AircraftRegistration.iloc[0]

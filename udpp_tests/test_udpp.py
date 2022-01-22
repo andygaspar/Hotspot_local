@@ -17,11 +17,10 @@ pd.set_option('display.max_rows', 500)
 pd.set_option('display.max_columns', 500)
 pd.set_option('display.width', 1000)
 
-
 schedule_maker = df_to_schedule.RealisticSchedule()
 
 
-def run_test(n_flights, c_reduction, df, n_runs, test=False,
+def run_test(n_flights, c_reduction, df, n_runs, regulation_time=0, test=False,
              mincost=True, nnbound=True, udpp=True, run_num=None, c_red=None, n_f=None):
     test_concluded = False
     i = 0
@@ -38,7 +37,7 @@ def run_test(n_flights, c_reduction, df, n_runs, test=False,
 
         slot_list, fl_list, airport = schedule_maker.make_sl_fl_from_data(n_flights=n_flights,
                                                                           capacity_reduction=c_reduction,
-                                                                          compute=True)
+                                                                          compute=True, regulation_time=regulation_time)
 
         if compute:
             print(airport)
@@ -58,19 +57,18 @@ def run_test(n_flights, c_reduction, df, n_runs, test=False,
                 sol.append_to_df(max_model, "nnbound")
                 max_model.print_performance()
 
-
             if udpp:
                 print("u", n_flights, c_reduction, i)
-                udpp_model_xp = UDPPmodel(slot_list, fl_list, hfes=0)
+                udpp_model = UDPPmodel(slot_list, fl_list, hfes=0)
                 t = time.time()
-                udpp_model_xp.run(optimised=True)
-                sol.append_to_df(udpp_model_xp, "udpp_0")
+                udpp_model.run(optimised=True)
+                udpp_model.print_performance()
+                sol.append_to_df(udpp_model, "udpp_0")
                 # print(time.time()-t)
 
-
             if not test:
-                df = sol.append_results(df, global_model, max_model, udpp_model_xp, i, n_flights, c_reduction, airport,
-                                    False)
+                df = sol.append_results(df, global_model, max_model, udpp_model, i, n_flights, c_reduction, airport,
+                                        False)
                 print("shape", df.shape, df.memory_usage(deep=True).sum())
 
             else:
@@ -93,9 +91,13 @@ df_test = pd.DataFrame(
              "model"])
 
 # df_test = pd.concat([df_test, run_test(150, 0.1, df_test, 100)])
+
+n_runs_per_case = 10
+regulation_time = 17 * 60
 for num_flights in [50]:
     for cap_reduction in [0.6, 0.5, 0.4, 0.3, 0.2, 0.1]:
-        df_test = run_test(num_flights, cap_reduction, df_test, 100,
+        df_test = run_test(num_flights, cap_reduction, df_test, n_runs=n_runs_per_case,
+                           regulation_time=regulation_time,
                            test=False, mincost=True, nnbound=True, udpp=True, run_num=9, n_f=150, c_red=0.3)
 
 # test=True, mincost=True, nnbound=True, udpp=True, run_num=9, n_f=150, c_red=0.3

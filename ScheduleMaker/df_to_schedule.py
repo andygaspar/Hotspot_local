@@ -8,7 +8,10 @@ from Istop.Preferences import preference
 import numpy as np
 import pandas as pd
 
+from ScenarioAnalysis.Curfew.curfew import get_curfew_threshold
+
 df_west_m = pd.read_csv("ScenarioAnalysis/Flights/flight_schedules_westminster.csv")
+
 
 fl_id_to_type = dict(zip(df_west_m.nid, df_west_m.aircraft_type))
 cost_funs = CostFuns()
@@ -59,8 +62,12 @@ class RealisticSchedule:
         self.aircraft_seats = get_data_dict()["aircraft_seats"]
         self.df_capacity = pd.read_csv("ScenarioAnalysis/df_frequencies/airport_max_capacity.csv")
         self.pax = pd.read_csv("ScenarioAnalysis/Pax/pax.csv")
+        self.df_turnaround = pd.read_csv('ScenarioAnalysis/Aircraft/turnaround.csv')
 
-    def make_sl_fl_from_data(self, n_flights: int, capacity_reduction: float, load_factor=0.89, compute=True):
+        self.turnaround_dict = dict(zip(self.df_turnaround.AirCluster, self.df_turnaround.MinTurnaround))
+
+    def make_sl_fl_from_data(self, n_flights: int, capacity_reduction: float, load_factor=0.89,
+                             regulation_time: int = 0, compute=True):
 
         airport = np.random.choice(self.df_airline.airport.to_list())
         df_airline = self.df_airline[self.df_airline.airport == airport]
@@ -96,7 +103,13 @@ class RealisticSchedule:
                     missed_connected = None
             else:
                 missed_connected = None
-            cost_fun = get_cost_model(fl_type, airline, airport, passengers, missed_connected=missed_connected)
+
+            eta = regulation_time + times[i]
+            min_turnaround = self.turnaround_dict[fl_type]
+            curfew_th = get_curfew_threshold(airport, airline, fl_type, eta, min_turnaround)
+
+            cost_fun = get_cost_model(fl_type, airline, airport, passengers, missed_connected=missed_connected,
+                                      curfew=curfew_th)
             delay_cost_vect = np.array([cost_fun(new_times[j]) for j in range(n_flights)])
             if compute:
                 slot, flight = modelStructure.make_slot_and_flight(slot_time=new_times[i], slot_index=i, eta=times[i],
