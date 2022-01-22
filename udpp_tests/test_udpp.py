@@ -17,7 +17,6 @@ pd.set_option('display.max_rows', 500)
 pd.set_option('display.max_columns', 500)
 pd.set_option('display.width', 1000)
 
-# ciao
 
 schedule_maker = df_to_schedule.RealisticSchedule()
 
@@ -29,12 +28,8 @@ def run_test(n_flights, c_reduction, df, n_runs, test=False,
     print(n_flights, c_reduction)
     while i < n_runs and not test_concluded:
 
-        # print(i)
-        # ************* init
+        print(i)
 
-        # print(airport)
-
-        # 150 0.2 13
         compute = True
         if test:
             compute = False
@@ -45,32 +40,24 @@ def run_test(n_flights, c_reduction, df, n_runs, test=False,
                                                                           capacity_reduction=c_reduction,
                                                                           compute=True)
 
-        mod = Istop(slot_list, fl_list)
-        mod.run()
         if compute:
             print(airport)
-            # print("i", n_flights, c_reduction, i)
-            # istop = Istop(slot_list, fl_list)
-            # t = time.time()
-            # istop.run(timing=True, verbose = True)
+            print("i", n_flights, c_reduction, i)
+
             if mincost:
                 print("g", n_flights, c_reduction, i)
                 global_model = GlobalOptimum(slot_list, fl_list)
                 global_model.run()
                 sol.append_to_df(global_model, "mincost")
-                # global_model.print_performance()
+                global_model.print_performance()
 
             if nnbound:
                 print("n", n_flights, c_reduction, i)
                 max_model = NNBoundModel(slot_list, fl_list)
                 max_model.run(verbose=False, time_limit=120)
                 sol.append_to_df(max_model, "nnbound")
-                # max_model.print_performance()
-                #
-                # max_model = NNBoundModel(slot_list, fl_list)
-                # max_model.run(verbose=True, time_limit=120, rescaling=False)
-                # append_to_df(max_model, "nnbound")
-                # max_model.print_performance()
+                max_model.print_performance()
+
 
             if udpp:
                 print("u", n_flights, c_reduction, i)
