@@ -55,16 +55,36 @@ def set_dfs():
     initial_capacities = []
 
     for r in reg.RegulationID:
-        try:
-            regulation = reg[reg.RegulationID == r]
-            location = regulation.ReferenceLocationName.iloc[0]
-            start = regulation.start.iloc[0]
-            initial_capacity = max(
-                cap[(cap.ReferenceLocationName == location) & (cap.start <= start) & (start <= cap.end)].Capacity)
-            initial_capacities.append(initial_capacity)
-
-        except:
-            initial_capacities.append(0)
+        regulation = reg[reg.RegulationID == r]
+        location = regulation.ReferenceLocationName.iloc[0]
+        if location == "EGLL":
+            print(cap[(cap.ReferenceLocationName == location)].Capacity)
+            print(max(cap[(cap.ReferenceLocationName == location)].Capacity))
+        start = regulation.start.iloc[0]
+        location_capacity = cap[(cap.ReferenceLocationName == location)]
+        # initial_capacity = max(
+        #     cap[(cap.ReferenceLocationName == location) & (cap.start <= start) & (start <= cap.end)].Capacity)
+        if location_capacity.shape[0] > 0:
+            initial_capacity = max(location_capacity.Capacity)
+        else:
+            initial_capacity = 0
+        initial_capacities.append(initial_capacity)
+        # try:
+        #
+        #     regulation = reg[reg.RegulationID == r]
+        #     location = regulation.ReferenceLocationName.iloc[0]
+        #     if location == "EGLL":
+        #         print(cap[(cap.ReferenceLocationName == location)].Capacity)
+        #         print(max(cap[(cap.ReferenceLocationName == location)].Capacity))
+        #     start = regulation.start.iloc[0]
+        #     # initial_capacity = max(
+        #     #     cap[(cap.ReferenceLocationName == location) & (cap.start <= start) & (start <= cap.end)].Capacity)
+        #     initial_capacity = max(
+        #         cap[(cap.ReferenceLocationName == location)].Capacity)
+        #     initial_capacities.append(initial_capacity)
+        #
+        # except:
+        #     initial_capacities.append(0)
 
     reg["initial_capacity"] = initial_capacities
     reg = reg[(reg.initial_capacity > 0) & (reg.Capacity > 0)]
@@ -109,3 +129,7 @@ def get_airport_set_dicts():
     return airport_set1_filtered, airport_set2_filtered
 
 set_dfs()
+regs = pd.read_csv("ScenarioAnalysis/RegulationCapacities/regulations.csv")
+r = regs[regs.ReferenceLocationName == "EGLL"]
+cap = pd.read_csv("ScenarioAnalysis/RegulationCapacities/1907_capacities.csv")
+egll = cap[cap.ReferenceLocationName == "EGLL"]

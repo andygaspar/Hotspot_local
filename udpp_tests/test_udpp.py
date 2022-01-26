@@ -94,8 +94,11 @@ df_test = pd.DataFrame(
 
 n_runs_per_case = 10
 regulation_time = 17 * 60
-for num_flights in [50]:
-    for cap_reduction in [0.6, 0.5, 0.4, 0.3, 0.2, 0.1]:
+
+num_flights_list = [80, 100, 120]
+cup_reduction_list = [0.6, 0.5, 0.4, 0.3, 0.2, 0.1]
+for num_flights in num_flights_list:
+    for cap_reduction in cup_reduction_list:
         df_test = run_test(num_flights, cap_reduction, df_test, n_runs=n_runs_per_case,
                            regulation_time=regulation_time,
                            test=False, mincost=True, nnbound=True, udpp=True, run_num=9, n_f=150, c_red=0.3)
