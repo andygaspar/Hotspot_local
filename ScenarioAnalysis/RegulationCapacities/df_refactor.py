@@ -28,6 +28,10 @@ def set_dfs():
     cap["min_end"] = cap.EndTimestamp.apply(time_to_int)
     cap["start"] = cap.day_start * 60 * 24 + cap.min_start
     cap["end"] = cap.day_end * 60 * 24 + cap.min_end
+    print(cap.columns)
+    cap_corner = pd.read_csv("ScenarioAnalysis/RegulationCapacities/capacity_from_corner.csv")
+    cap = cap[~cap["ReferenceLocationName"].isin(cap_corner.ReferenceLocationName)]
+    cap = pd.concat([cap_corner, cap[["ReferenceLocationName", "Capacity"]]], ignore_index=True)
 
     reg1 = pd.read_csv("ScenarioAnalysis/RegulationCapacities/1907_regulations.csv")
     reg1["month"] = [7 for _ in range(reg1.shape[0])]
@@ -57,9 +61,7 @@ def set_dfs():
     for r in reg.RegulationID:
         regulation = reg[reg.RegulationID == r]
         location = regulation.ReferenceLocationName.iloc[0]
-        if location == "EGLL":
-            print(cap[(cap.ReferenceLocationName == location)].Capacity)
-            print(max(cap[(cap.ReferenceLocationName == location)].Capacity))
+
         start = regulation.start.iloc[0]
         location_capacity = cap[(cap.ReferenceLocationName == location)]
         # initial_capacity = max(
@@ -129,7 +131,25 @@ def get_airport_set_dicts():
     return airport_set1_filtered, airport_set2_filtered
 
 set_dfs()
+
+import pandas as pd
 regs = pd.read_csv("ScenarioAnalysis/RegulationCapacities/regulations.csv")
 r = regs[regs.ReferenceLocationName == "EGLL"]
 cap = pd.read_csv("ScenarioAnalysis/RegulationCapacities/1907_capacities.csv")
 egll = cap[cap.ReferenceLocationName == "EGLL"]
+
+r.iloc[0]
+
+fl = pd.read_csv("ScenarioAnalysis/Flights/flights_regulated.csv")
+fl.columns
+fl_e = fl[fl.Destination == "EGLL"]
+fl_e_r = fl_e[fl_e.MPR == "EGLLA16"]
+
+fll = pd.read_csv("ScenarioAnalysis/Flights/flights_complete.csv")
+fll_e = fll[fll.MPR == "EGLLA16"].sort_values(by="arr_min")
+
+start = fll_e.arr_min.iloc[0]
+end = fll_e.arr_min.iloc[-1]
+(end - start)/fll_e.shape[0]
+
+60/2.66
