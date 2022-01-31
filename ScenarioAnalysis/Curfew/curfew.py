@@ -10,7 +10,7 @@ def get_curfew_threshold(airport, airline, air_cluster, eta, min_turnaround):
                     & (eta - 60 <= flights.arr_min) & (flights.arr_min <= eta + 60)]
 
     if df_fl.shape[0] == 0:
-        return None
+        return None, None
 
     fl_random = df_fl.sample(1)
     registration = fl_random.AircraftRegistration.iloc[0]
@@ -23,7 +23,7 @@ def get_curfew_threshold(airport, airline, air_cluster, eta, min_turnaround):
     final_destination = df_rotation.iloc[-1].Destination
 
     if final_destination not in df_curfew.Airport.to_list():
-        return None
+        return None, None
 
     flight_durations = (df_rotation.arr_min - df_rotation.dep_min).to_numpy()
 
@@ -38,4 +38,4 @@ def get_curfew_threshold(airport, airline, air_cluster, eta, min_turnaround):
     if open_curfew_time > curfew_time:
         curfew_time = 1440 + curfew_time
 
-    return curfew_time - eta
+    return curfew_time - eta, final_destination
