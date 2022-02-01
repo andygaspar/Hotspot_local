@@ -20,6 +20,9 @@ def get_curfew_threshold(airport, airline, air_cluster, eta, min_turnaround):
     df_rotation = flights[(flights.AircraftRegistration == registration) & (flights.arr_day == day) &
                           (flights.arr_min >= arr_time)].sort_values(by="arr_min")
 
+    if df_rotation.shape[0] == 0:
+        return None, None
+
     final_destination = df_rotation.iloc[-1].Destination
 
     if final_destination not in df_curfew.Airport.to_list():

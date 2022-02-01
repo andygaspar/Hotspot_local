@@ -35,7 +35,8 @@ class NNBoundModel(mS.ModelStructure):
         self.m = Model('CVRP')
         # self.m.setParam('Method', 2) ###################testare == 2 !!!!!!!!!!!!111c
         self.m.modelSense = GRB.MINIMIZE
-        self.rescaling = 1000 / max([flight.maxCost for flight in flight_list])
+        max_cost = max([flight.maxCost for flight in flight_list])
+        self.rescaling = 1000 / max_cost if max_cost > 0 else 1
         self.x = None
 
     def set_variables(self):

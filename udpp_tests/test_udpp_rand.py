@@ -38,19 +38,19 @@ def run_test(df, n_runs, capacity_min: float = 0.,
         global_model = GlobalOptimum(slot_list, fl_list)
         global_model.run()
         sol.append_to_df(global_model, "mincost")
-        global_model.print_performance()
+        # global_model.print_performance()
 
         # print("n", regulation.nFlights, regulation.cReduction, i)
         max_model = NNBoundModel(slot_list, fl_list)
-        max_model.run(verbose=False, time_limit=120)
+        max_model.run(verbose=False, time_limit=120, rescaling=False)
         sol.append_to_df(max_model, "nnbound")
-        max_model.print_performance()
+        # max_model.print_performance()
 
         # print("u", regulation.nFlights, regulation.cReduction, i)
         udpp_model = UDPPmodel(slot_list, fl_list, hfes=0)
         t = time.time()
         udpp_model.run(optimised=True)
-        udpp_model.print_performance()
+        # udpp_model.print_performance()
         sol.append_to_df(udpp_model, "udpp_0")
         # print(time.time()-t)
 
@@ -73,7 +73,7 @@ df_test = pd.DataFrame(
 # df_test = pd.concat([df_test, run_test(150, 0.1, df_test, 100)])
 
 
-df_test = run_test(n_runs=1000, df=df_test)
+df_test = run_test(n_runs=100, df=df_test)
 
 # test=True, mincost=True, nnbound=True, udpp=True, run_num=9, n_f=150, c_red=0.3
 # run_test(num_flights, cap_reduction, 3)

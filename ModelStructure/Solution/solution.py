@@ -14,10 +14,13 @@ def make_performance_df(model):
     num_flights = [model.numFlights]
     initial_costs = [model.initialTotalCosts]
     final_costs = [model.compute_costs(model.flights, "final")]
-    reduction = [np.round(
-        10000 * (model.initialTotalCosts - model.compute_costs(model.flights, "final")) / model.initialTotalCosts
-    ) / 100
-                 ]
+    if model.initialTotalCosts > 0:
+        reduction = [np.round(
+            10000 * (model.initialTotalCosts - model.compute_costs(model.flights, "final")) / model.initialTotalCosts
+        ) / 100
+                     ]
+    else:
+        reduction = [0]
     initial_delay = ["-"]
     final_delay = ["-"]
     for airline in model.airlines:

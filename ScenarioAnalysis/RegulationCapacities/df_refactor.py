@@ -105,8 +105,6 @@ def set_dfs():
     reg["capacity_reduction"] = (reg.initial_capacity - reg.actual_capacity) / reg.initial_capacity
     reg["capacity_reduction_mean"] = (reg.initial_capacity - reg.actual_capacity_mean) / reg.initial_capacity
 
-
-
     reg.to_csv("ScenarioAnalysis/RegulationCapacities/regulations.csv", index_label=False, index=False)
     cap.to_csv("ScenarioAnalysis/RegulationCapacities/capacities.csv", index_label=False, index=False)
 

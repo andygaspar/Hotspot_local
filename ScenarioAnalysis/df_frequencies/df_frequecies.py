@@ -14,6 +14,7 @@ reg = reg[(reg.capacity_reduction > 0)]
 reg = reg[(reg.capacity_reduction_mean > 0)]
 reg_25 = reg_25[(reg_25.capacity_reduction > 0)]
 reg_25 = reg_25[(reg_25.capacity_reduction_mean > 0)]
+reg_25 = reg_25[reg_25.n_flights > 0]
 
 # reg_25.to_csv("ScenarioAnalysis/RegulationCapacities/regulations_25_nozero.csv", index_label=False, index=False)
 
