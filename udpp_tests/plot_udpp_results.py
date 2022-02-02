@@ -2,11 +2,77 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 
+plt.rcParams["figure.figsize"] = (20,18)
+plt.rcParams.update({'font.size': 22})
+plt.rcParams["figure.autolayout"] = True
 
-res = pd.read_csv("results.csv")
-fig, ax = plt.subplots()
 
-airlines = ["F", "E", "D", "C", "B", "A"]
+res = pd.read_csv("udpp_tests/cap_n_fl_test_1000.csv")
+res["reduction"] = res["initial costs"] - res["final costs"]
+
+df_mincost = res[res.model == "mincost"]
+df_nnbound = res[res.model == "nnbound"]
+df_udpp = res[res.model == "udpp_0"]
+
+df_total = res[res.airline == "total"]
+df_total = df_total.sort_values(by="initial costs")
+
+df_mincost_total = df_total[df_total.model == "mincost"]
+df_nnbound_total = df_total[df_total.model == "nnbound"]
+df_udpp_total = df_total[df_total.model == "udpp_0"]
+
+
+
+plt.plot(df_mincost_total["initial costs"], df_mincost_total.reduction)
+plt.plot(df_mincost_total["initial costs"], df_nnbound_total.reduction)
+plt.plot(df_mincost_total["initial costs"], df_total[df_total.model == "udpp_0"].reduction)
+plt.show()
+
+
+plt.plot(df_mincost_total["initial costs"], df_mincost_total["reduction %"])
+plt.plot(df_mincost_total["initial costs"], df_nnbound_total["reduction %"])
+plt.plot(df_mincost_total["initial costs"], df_total[df_total.model == "udpp_0"]["reduction %"])
+plt.show()
+
+
+plt.scatter(df_udpp_total.c_reduction, df_udpp_total.n_flights, s=df_udpp_total.reduction*0.001)
+plt.show()
+
+
+plt.scatter(df_udpp_total.c_reduction, df_udpp_total.n_flights, s=df_udpp_total["reduction %"]*4)
+plt.show()
+
+df_mincost_total["reduction %"].mean()
+df_mincost_total["reduction %"].std()
+df_nnbound_total["reduction %"].mean()
+df_nnbound_total["reduction %"].std()
+df_udpp_total["reduction %"].mean()
+df_udpp_total["reduction %"].std()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 # num flights **********************************

@@ -27,13 +27,14 @@ def run_test(df, n_runs, capacity_min: float = 0.,
     for i in range(n_runs):
         regulation: Regulation
         regulation = schedule_maker.get_regulation()
+        print(regulation.airport)
+        print(regulation.nFlights, regulation.cReduction, regulation.startTime, i)
         slot_list, fl_list = schedule_maker.make_sl_fl_from_data(airport=regulation.airport,
                                                                  n_flights=regulation.nFlights,
                                                                  capacity_reduction=regulation.cReduction,
                                                                  compute=True, regulation_time=regulation.startTime)
 
-        print(regulation.airport)
-        print(regulation.nFlights, regulation.cReduction, regulation.startTime, i)
+
 
         global_model = GlobalOptimum(slot_list, fl_list)
         global_model.run()
@@ -73,11 +74,13 @@ df_test = pd.DataFrame(
 # df_test = pd.concat([df_test, run_test(150, 0.1, df_test, 100)])
 
 
-df_test = run_test(n_runs=100, df=df_test)
+df_test = run_test(n_runs=1000, df=df_test)
 
 # test=True, mincost=True, nnbound=True, udpp=True, run_num=9, n_f=150, c_red=0.3
 # run_test(num_flights, cap_reduction, 3)
 
 
 # print(df_test)
-df_test.to_csv("udpp_tests/cap_n_fl_test.csv", index_label=False, index=False)
+df_test.to_csv("udpp_tests/cap_n_fl_test_1000.csv", index_label=False, index=False)
+
+
