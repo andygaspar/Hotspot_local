@@ -26,6 +26,7 @@ class RealisticSchedule:
         self.df_capacity = pd.read_csv("ScenarioAnalysis/df_frequencies/airport_max_capacity.csv")
         self.pax = pd.read_csv("ScenarioAnalysis/Pax/pax.csv")
         self.df_turnaround = pd.read_csv('ScenarioAnalysis/Aircraft/turnaround.csv')
+        self.df_airport_airline_aircraft = pd.read_csv("ScenarioAnalysis/df_frequencies/airport_airline_cluster_frequency.csv")
 
         self.turnaround_dict = dict(zip(self.df_turnaround.AirCluster, self.df_turnaround.MinTurnaround))
 
@@ -45,31 +46,20 @@ class RealisticSchedule:
         times = np.linspace(0, n_flights * interval, n_flights)
         new_times = np.linspace(0, n_flights * new_interval, n_flights)
 
-        airline_low = df_airline[df_airline.low_cost].airline.to_list()
+        df_airport = self.df_airport_airline_aircraft[self.df_airport_airline_aircraft.airport == airport]
 
         flight_list = []
         slot_list = []
 
         for i in range(n_flights):
             airline = df_airline.airline.sample(weights=df_airline.frequency).iloc[0]
-            # print(airline)
-            if airline in airline_low:
-                fl_type = self.df_aircraft_low.aircraft.sample(weights=self.df_aircraft_low.frequency).iloc[0]
-            else:
-                fl_type = self.df_aircraft_high.aircraft.sample(weights=self.df_aircraft_high.frequency).iloc[0]
+            df_airport_airline = df_airport[df_airport.airline == airline]
+            fl_type = df_airport_airline.air_cluster.sample(weights=df_airport_airline.frequency).iloc[0]
+
 
             passengers = self.get_passengers(airport=airport, airline=airline,
                                              air_cluster=fl_type, load_factor=load_factor)
-            pax_connections = self.pax[(self.pax.destination == airport) & (self.pax.airline == airline)]
-            if pax_connections.shape[0] > 0:
-                pax_connections = pax_connections.sample(n=passengers, weights=pax_connections.pax, replace=True)
-                pax_connections = pax_connections[pax_connections.leg2 > 0]
-                if pax_connections.shape[0] > 0:
-                    missed_connected = pax_connections.apply(lambda x: (x.delta_leg1, x.delay), axis=1).to_list()
-                else:
-                    missed_connected = None
-            else:
-                missed_connected = None
+            missed_connected = self.get_missed_connected(airport=airport, airline=airline, passengers=passengers)
 
             eta = regulation_time + times[i]
             min_turnaround = self.turnaround_dict[fl_type]
@@ -113,3 +103,27 @@ class RealisticSchedule:
                                 c_reduction=regulation.capacity_reduction_mean,
                                 start_time=regulation.min_start)
         return regulation
+
+    def get_missed_connected(self, airport, airline, passengers):
+        pax_connections = self.pax[(self.pax.destination == airport) & (self.pax.airline == airline)]
+        if pax_connections.shape[0] > 0:
+            pax_connections = pax_connections.sample(n=passengers, weights=pax_connections.pax, replace=True)
+            pax_connections = pax_connections[pax_connections.leg2 > 0]
+            if pax_connections.shape[0] > 0:
+                missed_connected = pax_connections.apply(lambda x: (x.delta_leg1, x.delay), axis=1).to_list()
+            else:
+                missed_connected = None
+        else:
+            missed_connected = None
+
+        return missed_connected
+
+# old air_cluster distribution
+# airline_low = df_airline[df_airline.low_cost].airline.to_list()
+
+# for....
+#   print(airline)
+#   if airline in airline_low:
+#     fl_type = self.df_aircraft_low.aircraft.sample(weights=self.df_aircraft_low.frequency).iloc[0]
+#   else:
+#     fl_type = self.df_aircraft_high.aircraft.sample(weights=self.df_aircraft_high.frequency).iloc[0]

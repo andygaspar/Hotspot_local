@@ -42,10 +42,6 @@ for airport in airports.Airport:
                                                        ignore_index=True)
 
 
-egll = df_airport_air_cluster_frequencies[(df_airport_air_cluster_frequencies.airport == "EGLL")]
-dlh = egll[egll.airline == "DLH"]
-
-
 df_airport_air_cluster_frequencies.to_csv("ScenarioAnalysis/df_frequencies/airport_airline_cluster_frequency.csv", index_label=False,
                                index=False)
 

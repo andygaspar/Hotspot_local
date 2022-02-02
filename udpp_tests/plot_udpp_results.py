@@ -64,17 +64,6 @@ df_udpp_total["reduction %"].std()
 
 
 
-
-
-
-
-
-
-
-
-
-
-
 # num flights **********************************
 
 
