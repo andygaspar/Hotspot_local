@@ -112,4 +112,13 @@ min(reg_25.capacity_reduction_mean + 1 - min(reg_25.capacity_reduction_mean))
 
 
 
+# airline distr
+import pandas as pd
+airline = pd.read_csv("ScenarioAnalysis/df_frequencies/airport_airline_frequency.csv")
+
+print(airline)
+
+
+
+
 

@@ -2,14 +2,14 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 
-flights = pd.read_csv("ScenarioAnalysis/Flights/flights.csv")
+flights = pd.read_csv("ScenarioAnalysis/Flights/flights_complete.csv")
 airports = pd.read_csv("ScenarioAnalysis/airportMore25M.csv")
 flights = flights[flights.Destination.isin(airports.Airport)]
 
 airlines = flights.Company.unique()
 
 airline_frequency = flights.Company.value_counts()
-low_costs = pd.read_csv("ScenarioAnalysis/Flights/2017-LCC.csv")
+low_costs = pd.read_csv("ScenarioAnalysis/df_frequencies/2017-LCC.csv")
 
 df_frequency = pd.DataFrame({"airline": airline_frequency.index, "frequency": airline_frequency.to_numpy(),
                              "low_cost": [True if airline in list(low_costs.airline) else False
