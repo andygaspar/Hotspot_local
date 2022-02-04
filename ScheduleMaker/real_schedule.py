@@ -5,6 +5,7 @@ from CostPackage.arrival_costs import get_cost_model, get_data_dict
 from ModelStructure import modelStructure
 from ModelStructure.Costs.costFunctionDict import CostFuns
 from ScenarioAnalysis.Curfew.curfew import get_curfew_threshold
+from ScenarioAnalysis.Flights.flight_length import get_flight_length
 
 
 class Regulation:
@@ -56,19 +57,22 @@ class RealisticSchedule:
             df_airport_airline = df_airport[df_airport.airline == airline]
             fl_type = df_airport_airline.air_cluster.sample(weights=df_airport_airline.frequency).iloc[0]
 
-
             passengers = self.get_passengers(airport=airport, airline=airline,
                                              air_cluster=fl_type, load_factor=load_factor)
             missed_connected = self.get_missed_connected(airport=airport, airline=airline, passengers=passengers)
 
+            length = get_flight_length(airline=airline, airport=airport, air_cluster=fl_type)
+
             eta = regulation_time + times[i]
             min_turnaround = self.turnaround_dict[fl_type]
             curfew_th, rotation_destination = get_curfew_threshold(airport, airline, fl_type, eta, min_turnaround)
-            react_curfew = (curfew_th, self.get_passengers(rotation_destination, airline, fl_type, load_factor)) \
+            curfew = (curfew_th, self.get_passengers(rotation_destination, airline, fl_type, load_factor)) \
                 if curfew_th is not None else None
 
-            cost_fun = get_cost_model(fl_type, airline, airport, passengers, missed_connected=missed_connected,
-                                      react_curfew=react_curfew)
+            cost_fun = get_cost_model(aircraft_type=fl_type, airline=airline, destination=airport,
+                                      length=length, n_passengers=passengers, missed_connected=missed_connected,
+                                      curfew=curfew)
+
             delay_cost_vect = np.array([cost_fun(new_times[j]) for j in range(n_flights)])
             if compute:
                 slot, flight = modelStructure.make_slot_and_flight(slot_time=new_times[i], slot_index=i, eta=times[i],

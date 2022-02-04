@@ -81,6 +81,8 @@ df_test = run_test(n_runs=1000, df=df_test)
 
 
 # print(df_test)
-df_test.to_csv("udpp_tests/cap_n_fl_test_1000.csv", index_label=False, index=False)
+df_test.to_csv("udpp_tests/cap_n_fl_test_1000_1.csv", index_label=False, index=False)
+
+
 
 
