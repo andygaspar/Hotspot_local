@@ -1,8 +1,8 @@
 import pandas as pd
 
-def append_to_df(model, name, print_performance=False):
+def append_to_df(model, name, hfes=0, print_performance=False):
 
-    if name != "udpp_0":
+    if name != "udpp":
         model.report["model"] = name
         model.report["comp time"] = None
         model.report["protections"] = None
@@ -12,7 +12,7 @@ def append_to_df(model, name, print_performance=False):
         model.report["negative mins"] = None
 
     else:
-        model.report["model"] = "udpp_0"
+        model.report["model"] = "udpp_"+str(hfes)
         model.report["comp time"] = [model.computationalTime] + \
                                             [airline.udppComputationalTime for airline in model.airlines]
 

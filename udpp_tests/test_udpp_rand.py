@@ -48,11 +48,11 @@ def run_test(df, n_runs, capacity_min: float = 0.,
         # max_model.print_performance()
 
         # print("u", regulation.nFlights, regulation.cReduction, i)
-        udpp_model = UDPPmodel(slot_list, fl_list, hfes=0)
+        udpp_model = UDPPmodel(slot_list, fl_list, hfes=5)
         t = time.time()
         udpp_model.run(optimised=True)
         # udpp_model.print_performance()
-        sol.append_to_df(udpp_model, "udpp_0")
+        sol.append_to_df(udpp_model, "udpp", hfes=5)
         # print(time.time()-t)
 
         df = sol.append_results(df, global_model, max_model, udpp_model, i, regulation.nFlights, regulation.cReduction,
@@ -71,18 +71,5 @@ df_test = pd.DataFrame(
     columns=["airline", "num flights", "initial costs", "final costs", "reduction %", "run", "n_flights", "c_reduction",
              "model"])
 
-# df_test = pd.concat([df_test, run_test(150, 0.1, df_test, 100)])
-
-
 df_test = run_test(n_runs=1000, df=df_test)
-
-# test=True, mincost=True, nnbound=True, udpp=True, run_num=9, n_f=150, c_red=0.3
-# run_test(num_flights, cap_reduction, 3)
-
-
-# print(df_test)
-df_test.to_csv("udpp_tests/cap_n_fl_test_1000_1.csv", index_label=False, index=False)
-
-
-
-
+df_test.to_csv("udpp_tests/cap_n_fl_test_1000_hfes.csv", index_label=False, index=False)

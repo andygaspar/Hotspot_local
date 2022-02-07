@@ -26,8 +26,12 @@ class RealisticSchedule:
         self.aircraft_seats = get_data_dict()["aircraft_seats"]
         self.df_capacity = pd.read_csv("ScenarioAnalysis/df_frequencies/airport_max_capacity.csv")
         self.pax = pd.read_csv("ScenarioAnalysis/Pax/pax.csv")
+
+        # iata increase load factor
+        self.pax.pax = self.pax.pax.apply(lambda pp: int(pp + pp * 0.021))
         self.df_turnaround = pd.read_csv('ScenarioAnalysis/Aircraft/turnaround.csv')
-        self.df_airport_airline_aircraft = pd.read_csv("ScenarioAnalysis/df_frequencies/airport_airline_cluster_frequency.csv")
+        self.df_airport_airline_aircraft = \
+            pd.read_csv("ScenarioAnalysis/df_frequencies/airport_airline_cluster_frequency.csv")
 
         self.turnaround_dict = dict(zip(self.df_turnaround.AirCluster, self.df_turnaround.MinTurnaround))
 
@@ -131,3 +135,5 @@ class RealisticSchedule:
 #     fl_type = self.df_aircraft_low.aircraft.sample(weights=self.df_aircraft_low.frequency).iloc[0]
 #   else:
 #     fl_type = self.df_aircraft_high.aircraft.sample(weights=self.df_aircraft_high.frequency).iloc[0]
+
+

@@ -109,6 +109,8 @@ class Istop(mS.ModelStructure):
                 self, offers=self.matches, reductions=self.reductions, mip_gap=self.mipGap)
             # plt.hist([of.reduction for of in g_offer_solver.offers], density=True, bins=20)
             # plt.show()
+            print(g_offer_solver.reductions)
+            print(g_offer_solver.compatibilityMatrix)
             offer_solution = g_offer_solver.run(timing=True)
             print("reduction gurobi ", g_offer_solver.m.getObjective().getValue())
 
