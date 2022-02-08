@@ -42,12 +42,12 @@ def stop(model, where):
 
 class GurobiSolverOffer:
 
-    def __init__(self, model, offers, reductions):
+    def __init__(self, model, offers, reductions, mip_gap):
 
         self.m = Model('CVRP')
         # self.m.setParam('Method', 2) ###################testare == 2 !!!!!!!!!!!!111c
         self.m.modelSense = GRB.MAXIMIZE
-        self.m.setParam('MIPGap', 0)
+        self.m.setParam('MIPGap', mip_gap)
 
         self.flights = model.flights
         self.airlines = model.airlines
@@ -68,6 +68,7 @@ class GurobiSolverOffer:
         self.numOffers = len(self.offers)
         self.reductions = np.array([reductions[i] for i in order])
 
+
         self.set_match_for_flight(model.flights)
 
         self.compatibilityMatrix = None
@@ -85,11 +86,12 @@ class GurobiSolverOffer:
 
     def set_constraints(self):
 
-        self.compatibilityMatrix = np.full((self.numOffers, self.numOffers), True, dtype=bool)
+        self.compatibilityMatrix = np.zeros((self.numOffers, self.numOffers), dtype=bool)
+
         for i, offer in enumerate(self.offers):
             incompatible = np.unique([off for flight in offer.flights for off in flight.offers])
-            indexes = [off.num for off in self.offers if off.num not in incompatible]
-            self.compatibilityMatrix[i, indexes] = False
+            self.compatibilityMatrix[i, incompatible] = True
+            self.compatibilityMatrix[i, i] = False
 
         for i in range(self.numOffers):
             self.compatibilityMatrix[i, i] = False
@@ -108,8 +110,8 @@ class GurobiSolverOffer:
             self.m.setParam('OutputFlag', 0)
 
         self.set_variables()
-        # if branching:
-        #     self.set_priority()
+        if branching:
+            self.set_priority()
         start = time.time()
         self.set_constraints()
         end = time.time() - start
@@ -133,16 +135,9 @@ class GurobiSolverOffer:
             status = "infeasible"
         print(status)
 
+        offer_solution = self.get_solution_offers()
 
-
-
-        # for flight in self.flights:
-        #     if flight.eta > flight.newSlot.time:
-        #         print("********************** danno *********************************",
-        #               flight, flight.eta, flight.newSlot.time)
-
-
-        # return self.get_sol_array(), self.get_solution_offers()
+        return offer_solution
 
     def set_match_for_flight(self, flights: List[IstopFlight]):
         for flight in flights:
@@ -152,18 +147,10 @@ class GurobiSolverOffer:
                     if flight.slot == couple[0].slot or flight.slot == couple[1].slot:
                         flight.offers.append(offer.num)
 
-    def get_sol_array(self):
-        solution = np.zeros((len(self.flights), len(self.slots)))
-        for flight in self.flights:
-            for slot in self.slots:
-                if self.x[flight.index, slot.index].x > 0.5:
-                    solution[flight.index, slot.index] = 1
+    def get_solution_offers(self):
+        solution = []
+        for i, offer in enumerate(self.offers):
+            if self.c[i].x > 0.5:
+                solution.append(offer.offer)
         return solution
 
-    def get_solution_offers(self):
-        solution = np.zeros(len(self.matches))
-        for i in range(len(self.matches)):
-            if self.c[i].x > 0.5:
-                solution[i] = 1
-                print(self.matches[i])
-        return solution

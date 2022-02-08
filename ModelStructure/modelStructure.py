@@ -34,8 +34,6 @@ class ModelStructure:
 
         self.initialTotalCosts = self.compute_costs(self.flights, "initial")
 
-        self.scheduleMatrix = self.set_schedule_matrix()
-
         self.emptySlots = []
 
         self.solution = None
@@ -126,11 +124,6 @@ class ModelStructure:
             flight.delayVect = np.array(
                 [0 if slot.time < flight.eta else slot.time - flight.eta for slot in self.slots])
 
-    def set_schedule_matrix(self):
-        arr = []
-        for flight in self.flights:
-            arr.append([flight.slot.time] + [flight.eta] + list(flight.costVect))
-        return np.array(arr)
 
     def make_airlines(self, air_ctor):
 

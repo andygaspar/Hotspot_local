@@ -27,7 +27,10 @@ class IstopAirline(air.Airline):
 
         self.flight_pairs = self.pairs(self.flights)
 
-        self.flight_triplets = self.triplet(self.flights)
+        self.flight_pairs_idx = np.array(list(combinations([fl.slot.index for fl in self.flights], 2)), dtype=np.short)
+
+
+        # self.flight_triplets = self.triplet(self.flights)
 
     def set_and_standardise_fit_vect(self):
         self.flights: List[IstopFlight]

@@ -10,6 +10,7 @@ def time_to_int(t):
 
 
 def set_dfs():
+    df_flights = pd.read_csv("ScenarioAnalysis/Flights/flights_complete.csv")
     cap1 = pd.read_csv("ScenarioAnalysis/RegulationCapacities/1907_capacities.csv")
     cap1["month"] = [7 for _ in range(cap1.shape[0])]
 
@@ -28,6 +29,10 @@ def set_dfs():
     cap["min_end"] = cap.EndTimestamp.apply(time_to_int)
     cap["start"] = cap.day_start * 60 * 24 + cap.min_start
     cap["end"] = cap.day_end * 60 * 24 + cap.min_end
+    cap.loc[cap.ReferenceLocationName == "EGLL", "Capacity"] = 46
+    cap_corner = pd.read_csv("ScenarioAnalysis/RegulationCapacities/capacity_from_corner.csv")
+    # cap = cap[~cap["ReferenceLocationName"].isin(cap_corner.ReferenceLocationName)]
+    # cap = pd.concat([cap_corner, cap[["ReferenceLocationName", "Capacity"]]], ignore_index=True)
 
     reg1 = pd.read_csv("ScenarioAnalysis/RegulationCapacities/1907_regulations.csv")
     reg1["month"] = [7 for _ in range(reg1.shape[0])]
@@ -53,30 +58,52 @@ def set_dfs():
     reg = reg[reg.duration > 0]
 
     initial_capacities = []
+    actual_capacity = []
+    actual_capacity_mean = []
+    fl_delayed = []
+    i = 0
 
     for r in reg.RegulationID:
-        try:
-            regulation = reg[reg.RegulationID == r]
-            location = regulation.ReferenceLocationName.iloc[0]
-            start = regulation.start.iloc[0]
-            initial_capacity = max(
-                cap[(cap.ReferenceLocationName == location) & (cap.start <= start) & (start <= cap.end)].Capacity)
-            initial_capacities.append(initial_capacity)
+        print(i)
+        i += 1
+        regulation = reg[reg.RegulationID == r]
+        location = regulation.ReferenceLocationName.iloc[0]
 
-        except:
-            initial_capacities.append(0)
+        start = regulation.start.iloc[0]
+        location_capacity = cap[(cap.ReferenceLocationName == location)]
+
+        initial_capacity = max(location_capacity.Capacity) if location_capacity.shape[0] > 0 else 0
+
+        initial_capacities.append(initial_capacity)
+        fl_reg = df_flights[df_flights.MPR == r].sort_values(by="arr_min")
+        n_flights = fl_reg.shape[0]
+        if n_flights > 0:
+            start, end = min(fl_reg.arr_min), max(fl_reg.arr_min)
+            actual_cap = int(np.round(60 / ((end - start)/n_flights))) if end - start > 0 else initial_capacity
+
+            mean_capacity = [int(np.round(60 / ((fl_reg.arr_min.iloc[i] - start)/(i + 1)))) if
+                             (fl_reg.arr_min.iloc[i] - start) > 0
+                             else initial_capacity for i in range(n_flights)]
+
+            act_mean_capacity = np.mean(mean_capacity)
+
+
+        else:
+            actual_cap = initial_capacity
+            act_mean_capacity = initial_capacity
+
+        actual_capacity.append(actual_cap)
+        actual_capacity_mean.append(act_mean_capacity)
+
+        fl_delayed.append(df_flights[(df_flights.MPR == r) & (df_flights.ATFMDelay > 0)].shape[0])
 
     reg["initial_capacity"] = initial_capacities
+    reg["actual_capacity"] = actual_capacity
+    reg["actual_capacity_mean"] = actual_capacity_mean
+    reg["n_flights"] = fl_delayed
     reg = reg[(reg.initial_capacity > 0) & (reg.Capacity > 0)]
-    reg["capacity_reduction"] = (reg.initial_capacity - reg.Capacity) / reg.initial_capacity
-
-    flights = pd.read_csv("ScenarioAnalysis/Flights/flights_regulated.csv")
-    flights_delayed = flights[flights.ATFMDelay > 0]
-    n_flights = []
-    for r in reg.RegulationID:
-        n_flights.append(flights_delayed[flights_delayed.MPR == r].shape[0])
-
-    reg["n_flights"] = n_flights
+    reg["capacity_reduction"] = (reg.initial_capacity - reg.actual_capacity) / reg.initial_capacity
+    reg["capacity_reduction_mean"] = (reg.initial_capacity - reg.actual_capacity_mean) / reg.initial_capacity
 
     reg.to_csv("ScenarioAnalysis/RegulationCapacities/regulations.csv", index_label=False, index=False)
     cap.to_csv("ScenarioAnalysis/RegulationCapacities/capacities.csv", index_label=False, index=False)
@@ -109,3 +136,4 @@ def get_airport_set_dicts():
     return airport_set1_filtered, airport_set2_filtered
 
 set_dfs()
+

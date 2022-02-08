@@ -1,5 +1,7 @@
 from typing import List
 
+from matplotlib import pyplot as plt
+
 from Istop.AirlineAndFlight.istopFlight import IstopFlight
 from Istop.Solvers.gurobySolverOffer import GurobiSolverOffer
 # from Istop.Solvers.mip_solver import MipSolver
@@ -11,14 +13,14 @@ from itertools import combinations
 from Istop.AirlineAndFlight.istopAirline import IstopAirline
 from ModelStructure.Flight.flight import Flight
 from ModelStructure.Slot.slot import Slot
-from OfferChecker.offerChecker import OfferChecker
 
 import numpy as np
 import pandas as pd
 
 import time
 
-# from Istop.Solvers.bb_p import TreeExplorer
+from ModelStructure.Solution import solution
+from OfferChecker.offerChecker import OfferChecker
 
 class Istop(mS.ModelStructure):
 
@@ -38,7 +40,7 @@ class Istop(mS.ModelStructure):
             j += 1
         return indexes
 
-    def __init__(self, slot_list: List[Slot], flights: List[Flight], triples=False):
+    def __init__(self, slot_list: List[Slot], flights: List[Flight], triples=False, mip_gap=0):
         self.offers = None
         self.triples = triples
 
@@ -58,11 +60,14 @@ class Istop(mS.ModelStructure):
         for airline in self.airlines:
             airline.set_and_standardise_fit_vect()
 
+        self.scheduleMatrix = self.set_schedule_matrix()
+
         self.airlines_pairs = np.array(list(combinations(self.airlines, 2)))
         self.airlines_triples = np.array(list(combinations(self.airlines, 3)))
 
         self.epsilon = sys.float_info.min
-        self.offerChecker = OfferChecker(self.scheduleMatrix)
+        self.offerChecker = OfferChecker(self.scheduleMatrix, self.flights)
+
         self.reductions = None
 
         self.matches = []
@@ -72,13 +77,17 @@ class Istop(mS.ModelStructure):
         self.offers_selected = []
 
         self.problem = None
+        self.mipGap = mip_gap
 
     def check_and_set_matches(self):
-        start = time.time()
-        self.matches = self.offerChecker.all_couples_check(self.airlines_pairs)
+
+        t = time.time()
+        self.matches, self.reductions = self.offerChecker.all_couples_check(self.airlines_pairs)
         if self.triples:
-            self.matches += self.offerChecker.all_triples_check(self.airlines_triples)
-        t = time.time() - start
+            matches, reductions = self.offerChecker.all_triples_check(self.airlines_triples)
+            self.matches += matches
+            self.reductions = np.append(self.reductions, reductions)
+
         for match in self.matches:
             for couple in match:
                 if not self.is_in(couple, self.couples):
@@ -87,44 +96,28 @@ class Istop(mS.ModelStructure):
                         self.flights_in_matches.append(couple[0])
                     if not self.f_in_matched(couple[1]):
                         self.flights_in_matches.append(couple[1])
-
-        self.reductions = self.offerChecker.get_reductions(self.matches)
+        t = time.time() - t
         print("comp time", self.offerChecker.compTime, t)
-        print("preprocess concluded in sec:", time.time() - start, "   Number of possible offers: ", len(self.matches))
+        print("preprocess concluded in sec:", t, "   Number of possible offers: ", len(self.matches))
+
         return len(self.matches) > 0
 
     def run(self, max_time=120, timing=False, verbose=False, branching=False):
         feasible = self.check_and_set_matches()
         if feasible:
-            g_offer_solver = GurobiSolverOffer(self, offers=self.matches, reductions=self.reductions)
-            g_offer_solver.run(timing=True)
+            g_offer_solver = GurobiSolverOffer(
+                self, offers=self.matches, reductions=self.reductions, mip_gap=self.mipGap)
+            # plt.hist([of.reduction for of in g_offer_solver.offers], density=True, bins=20)
+            # plt.show()
+            print(g_offer_solver.reductions)
+            print(g_offer_solver.compatibilityMatrix)
+            offer_solution = g_offer_solver.run(timing=True)
             print("reduction gurobi ", g_offer_solver.m.getObjective().getValue())
 
+            solution_assignment = self.offerChecker.get_solution_assignemnt(offer_solution)
+            self.assign_flights(solution_assignment)
 
-
-
-        # if feasible:
-        #     t = time.time()
-        #     self.problem = GurobiSolver(self)
-        #     solution_vect, offers_vect = self.problem.run(timing=timing, verbose=verbose, branching=branching)
-        #     print("time Gurobi", time.time()-t)
-        #
-        #     self.assign_flights(solution_vect)
-        #
-        #     print("gurobi solution")
-        #     offers = 0
-        #     for i in range(len(self.matches)):
-        #         if offers_vect[i] > 0.9:
-        #             self.offers_selected.append(self.matches[i])
-        #             # print(self.matches[i])
-        #             offers += 1
-        #     print("Number of offers selected: ", offers)
-
-
-
-
-
-
+            solution.make_solution(self)
 
     def other_airlines_compatible_slots(self, flight):
         others_slots = []
@@ -161,55 +154,19 @@ class Istop(mS.ModelStructure):
                 return True
         return False
 
-    def assign_flights(self, solution_vect):
+    def assign_flights(self, solution_assignment):
+        assigned_flights = []
+        for tup in solution_assignment:
+            assigned_flights.append(tup[0])
+            tup[0].newSlot = tup[1]
+
         for flight in self.flights:
-            for slot in self.slots:
-                if solution_vect[flight.slot.index, slot.index] > 0.9:
-                    flight.newSlot = slot
+            if flight not in assigned_flights:
+                flight.newSlot = flight.slot
 
-
-"""
-rows 936
-problem status, explained:  mip_optimal 27612.33615924535
-rows 936
-sets 0
-setmembers 0
-elems 8140
-primalinfeas 0
-dualinfeas 0
-simplexiter 42033
-lpstatus 1
-mipstatus 6
-cuts 0
-nodes 99
-nodedepth 1
-activenodes 0
-mipsolnode 1042
-mipsols 14
-cols 2545
-sparerows 793
-sparecols 0
-spareelems 2968
-sparemipents 315
-errorcode 0
-mipinfeas 132
-presolvestate 1310881
-parentnode 0
-namelength 1
-qelems 0
-numiis 0
-mipents 2545
-branchvar 0
-mipthreadid 0
-algorithm 2
-time 1
-originalrows 936
-callbackcount_optnode 0
-callbackcount_cutmgr 0
-systemmemory 1596327
-originalqelems 0
-maxprobnamelength 1024
-stopstatus 0
-originalmipents 2545
-
-"""
+    def set_schedule_matrix(self):
+        arr = []
+        flight: IstopFlight
+        for flight in self.flights:
+            arr.append([flight.slot.time] + [flight.eta] + list(flight.standardisedVector))
+        return np.array(arr)
