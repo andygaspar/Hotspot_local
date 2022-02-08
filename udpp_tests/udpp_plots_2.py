@@ -236,7 +236,7 @@ plt.bar(np.array(range(len(mincost_reduction_p_standard))) - .2, mincost_reducti
 plt.bar(np.array(range(len(nnbound_reduction_p))), nnbound_reduction_p, width=.2)
 plt.bar(np.array(range(len(udpp_reduction_p))) + .2, udpp_reduction_p, width=.2)
 plt.xticks(range(len(mincost_reduction_p)), bins[:-1])
-plt.yticks(range(-10, 61, 10), [-1000, 0, 10, 20, 30, 50, 50, 60])
+plt.yticks(range(-10, 61, 10), [-1000, 0, 10, 20, 30, 40, 50, 60])
 plt.title("MEAN REDUCTION % PER AIRLINE CLUSTER")
 plt.xlabel("N FLIGHTS PER AIRLINE (CLUSTER)")
 plt.ylabel("REDUCTION %")
