@@ -123,7 +123,7 @@ plt.show()
 # 'upper right'
 
 plt.scatter(reg_25.min_start, reg_25.capacity_reduction_mean, s=reg_25.n_flights)
-plt.xticks(range(0, 1441, 60),range(25))
+plt.xticks(range(0, 1441, 60), range(25))
 plt.show()
 
 

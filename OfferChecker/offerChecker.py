@@ -197,9 +197,10 @@ class OfferChecker(object):
     def print_triples(self):
         self.lib.print_triples_(self.obj)
 
-    def get_solution_assignemnt(self, matches):
+    def get_solution_assignment(self, matches):
 
         solution_assignment = []
+        assignment = None
 
         for match in matches:
             couple = (len(match) == 2)

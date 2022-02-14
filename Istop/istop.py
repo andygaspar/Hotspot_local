@@ -3,7 +3,7 @@ from typing import List
 from matplotlib import pyplot as plt
 
 from Istop.AirlineAndFlight.istopFlight import IstopFlight
-from Istop.Solvers.gurobySolverOffer import GurobiSolverOffer
+from Istop.Solvers.gurobi_offer_solver import GurobiOfferSolver
 # from Istop.Solvers.mip_solver import MipSolver
 # from Istop.Solvers.xpress_solver import XpressSolver
 from ModelStructure import modelStructure as mS
@@ -21,6 +21,7 @@ import time
 
 from ModelStructure.Solution import solution
 from OfferChecker.offerChecker import OfferChecker
+
 
 class Istop(mS.ModelStructure):
 
@@ -102,22 +103,23 @@ class Istop(mS.ModelStructure):
 
         return len(self.matches) > 0
 
-    def run(self, max_time=120, timing=False, verbose=False, branching=False):
+    def run(self, max_offers=5000):
         feasible = self.check_and_set_matches()
         if feasible:
-            g_offer_solver = GurobiSolverOffer(
-                self, offers=self.matches, reductions=self.reductions, mip_gap=self.mipGap)
+            g_offer_solver = GurobiOfferSolver(
+                self, offers=self.matches, max_offers=max_offers, time_limit=120, reductions=self.reductions, mip_gap=0)
             # plt.hist([of.reduction for of in g_offer_solver.offers], density=True, bins=20)
             # plt.show()
-            print(g_offer_solver.reductions)
-            print(g_offer_solver.compatibilityMatrix)
             offer_solution = g_offer_solver.run(timing=True)
             print("reduction gurobi ", g_offer_solver.m.getObjective().getValue())
 
-            solution_assignment = self.offerChecker.get_solution_assignemnt(offer_solution)
+            solution_assignment = self.offerChecker.get_solution_assignment(offer_solution)
             self.assign_flights(solution_assignment)
 
-            solution.make_solution(self)
+        else:
+            for flight in self.flights:
+                flight.newSlot = flight.slot
+        solution.make_solution(self)
 
     def other_airlines_compatible_slots(self, flight):
         others_slots = []
@@ -170,3 +172,4 @@ class Istop(mS.ModelStructure):
         for flight in self.flights:
             arr.append([flight.slot.time] + [flight.eta] + list(flight.standardisedVector))
         return np.array(arr)
+
