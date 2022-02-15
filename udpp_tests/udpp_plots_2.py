@@ -1,3 +1,4 @@
+import itertools
 import math
 
 import pandas as pd
@@ -61,12 +62,58 @@ plt.show()
 
 
 
+# scatter frequency
+
+cap_red = [np.around(i*0.1, decimals=1) for i in range(1,9)]
+n_flights = [25*i for i in range(17)]
+np.around(0.89, decimals=1)
+reg_freq = [df_udpp_total[(df_udpp_total.c_reduction == c) & (df_udpp_total.n_flights >= n_flights[i])
+                          & (df_udpp_total.n_flights < n_flights[i+1])].shape[0]
+            for c in cap_red for i in range(len(n_flights)-1)]
+
+
+c_red_n_fl_combs = itertools.product(cap_red, n_flights[1:])
+
+c_red, n_fl = [], []
+for i, j in c_red_n_fl_combs:
+    c_red.append(i)
+    n_fl.append(j)
+
 plt.rcParams["figure.figsize"] = (20, 18)
-plt.scatter(df_udpp_total.c_reduction, df_udpp_total.n_flights, s=df_udpp_total.reduction * 0.001)
+plt.scatter(c_red, n_fl, s=np.array(reg_freq)*50)
+gll = plt.scatter([], [], s=10_000, marker='o', color='#1f77b4')
+gl = plt.scatter([], [], s=5_000, marker='o', color='#1f77b4')
+ga = plt.scatter([], [], s=1_000, marker='o', color='#1f77b4')
+plt.legend((gll, gl, ga), ('10 ML\n\n', '5 ML\n\n', '1 ML'), scatterpoints=1, loc='upper right', ncol=1, fontsize=28)
+plt.title("FLIGHTS - CAPACITY REDUCTION FREQUENCY")
+plt.xlabel("CAPACITY")
+plt.ylabel("N FLIGHTS")
+plt.show()
+
+
+
+
+# initial costs
+
+
+plt.scatter(df_udpp_total.c_reduction, df_udpp_total.n_flights, s=df_udpp_total["initial costs"] * 0.001)
 gll = plt.scatter([], [], s=10_000, marker='o', color='#1f77b4')
 gl = plt.scatter([], [], s=5_000, marker='o', color='#1f77b4')
 ga = plt.scatter([], [], s=1_000, marker='o', color='#1f77b4')
 plt.legend((gll, gl, ga), ('10 ML\n\n', '5 ML\n\n', '1 ML'), scatterpoints=1,
+           loc='upper right', ncol=1, fontsize=28)
+plt.title("FLIGHTS - CAPACITY REDUCTION - INITIAL COSTS")
+plt.xlabel("CAPACITY")
+plt.ylabel("N FLIGHTS")
+plt.show()
+
+
+
+plt.scatter(df_udpp_total.c_reduction, df_udpp_total.n_flights, s=df_udpp_total.reduction * 0.001)
+gll = plt.scatter([], [], s=10_000, marker='o', color='#1f77b4')
+gl = plt.scatter([], [], s=5_000, marker='o', color='#1f77b4')
+ga = plt.scatter([], [], s=1_000, marker='o', color='#1f77b4')
+plt.legend((gll, gl, ga), ('\n\n10 ML\n', '5 ML\n\n', '1 ML'), scatterpoints=1,
            loc='upper right', ncol=1, fontsize=28)
 plt.title("FLIGHTS - CAPACITY REDUCTION - REDUCTION")
 plt.xlabel("CAPACITY")
@@ -74,7 +121,18 @@ plt.ylabel("N FLIGHTS")
 plt.show()
 
 
-
+plt.rcParams["figure.figsize"] = (20, 18)
+plt.scatter(df_udpp_total.c_reduction, df_udpp_total.n_flights, s=df_udpp_total["initial costs"] * 0.001, edgecolors='black')
+plt.scatter(df_udpp_total.c_reduction, df_udpp_total.n_flights, s=df_udpp_total.reduction * 0.001)
+gll = plt.scatter([], [], s=10_000, marker='o', color='#1f77b4')
+gl = plt.scatter([], [], s=5_000, marker='o', color='#1f77b4')
+ga = plt.scatter([], [], s=1_000, marker='o', color='#1f77b4')
+plt.legend((gll, gl, ga), ('10 ML\n\n', '5 ML\n\n', '1 ML'), scatterpoints=1,
+           loc='upper right', ncol=1, fontsize=28)
+plt.title("FLIGHTS - CAPACITY REDUCTION - INITIAL COSTS - reduction")
+plt.xlabel("CAPACITY")
+plt.ylabel("N FLIGHTS")
+plt.show()
 
 
 

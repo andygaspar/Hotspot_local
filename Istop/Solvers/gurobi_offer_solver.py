@@ -40,14 +40,15 @@ def stop(model, where):
             model.terminate()
 
 
-class GurobiSolverOffer:
+class GurobiOfferSolver:
 
-    def __init__(self, model, offers, reductions, mip_gap):
+    def __init__(self, model, offers, max_offers, time_limit, reductions, mip_gap):
 
         self.m = Model('CVRP')
         # self.m.setParam('Method', 2) ###################testare == 2 !!!!!!!!!!!!111c
         self.m.modelSense = GRB.MAXIMIZE
         self.m.setParam('MIPGap', mip_gap)
+        self.m._time_limit = time_limit
 
         self.flights = model.flights
         self.airlines = model.airlines
@@ -68,6 +69,9 @@ class GurobiSolverOffer:
         self.numOffers = len(self.offers)
         self.reductions = np.array([reductions[i] for i in order])
 
+        if len(self.offers) > max_offers:
+            self.offers = self.offers[:max_offers]
+            self.reductions = self.reductions[:max_offers]
 
         self.set_match_for_flight(model.flights)
 
