@@ -61,6 +61,18 @@ plt.legend()
 plt.show()
 
 
+# percentage distance
+
+plt.plot(range(1000), df_mincost_total["reduction %"].to_numpy()
+         - df_udpp_total["reduction %"].to_numpy())
+plt.plot(range(1000), df_nnbound_total["reduction %"].to_numpy()
+         - df_udpp_total["reduction %"].to_numpy())
+x_pos = [int(i*999/5) for i in range(6)]
+x = [int(df_mincost_total["initial costs"].iloc[i]) for i in x_pos]
+plt.xticks(x_pos, x)
+plt.show()
+
+
 
 # scatter frequency
 
