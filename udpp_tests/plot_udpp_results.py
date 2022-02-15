@@ -2,7 +2,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 
-plt.rcParams["figure.figsize"] = (20,18)
+plt.rcParams["figure.figsize"] = (20,10)
 plt.rcParams.update({'font.size': 22})
 plt.rcParams["figure.autolayout"] = True
 
@@ -33,6 +33,20 @@ plt.plot(df_mincost_total["initial costs"], df_mincost_total["reduction %"])
 plt.plot(df_mincost_total["initial costs"], df_nnbound_total["reduction %"])
 plt.plot(df_mincost_total["initial costs"], df_total[df_total.model == "udpp_0"]["reduction %"])
 plt.show()
+
+
+plt.plot(range(1000), df_mincost_total["reduction %"].to_numpy()
+         - df_udpp_total["reduction %"].to_numpy())
+plt.plot(range(1000), df_nnbound_total["reduction %"].to_numpy()
+         - df_udpp_total["reduction %"].to_numpy())
+x_pos = [int(i*999/5) for i in range(6)]
+x = [int(df_mincost_total["initial costs"].iloc[i]) for i in x_pos]
+plt.xticks(x_pos, x)
+plt.show()
+
+
+
+plt.rcParams["figure.figsize"] = (20,18)
 
 
 plt.scatter(df_udpp_total.c_reduction, df_udpp_total.n_flights, s=df_udpp_total.reduction*0.001)
