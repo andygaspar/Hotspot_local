@@ -2,7 +2,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 
-plt.rcParams["figure.figsize"] = (20,18)
+plt.rcParams["figure.figsize"] = (20,10)
 plt.rcParams.update({'font.size': 22})
 plt.rcParams["figure.autolayout"] = True
 
