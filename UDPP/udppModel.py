@@ -53,6 +53,8 @@ class UDPPmodel(ModelStructure):
 
         self.computationalTime = time.time() - start
         # print(time.time() - start)
+        self.update_missed_connecting()
+        self.update_hitting_curfew()
         solution.make_solution(self)
         for airline in self.airlines:
             # airline.finalCosts = self.compute_costs(airline.flights, "final")

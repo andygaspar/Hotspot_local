@@ -5,6 +5,12 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 
+
+mincost_color = '#1f77b4'
+nnbound_color = '#ff7f0e'
+udpp_color = '#2ca02c'
+
+
 plt.rcParams["figure.figsize"] = (20, 18)
 plt.rcParams.update({'font.size': 22})
 plt.rcParams["figure.autolayout"] = True
@@ -30,12 +36,48 @@ df_udpp_total = df_total[df_total.model == udpp_hfes_]
 
 
 
+# total costs and reductions
+total_inital = df_mincost_total["initial costs"].sum()
+mincost_final = df_mincost_total["final costs"].sum()
+nnbound_final = df_nnbound_total["final costs"].sum()
+udpp_final = df_udpp_total["final costs"].sum()
 
+mincost_total = df_mincost_total.reduction.sum()
+nnbound_total = df_nnbound_total.reduction.sum()
+udpp_total = df_udpp_total.reduction.sum()
+
+(total_inital - mincost_final ) /total_inital
+(total_inital - nnbound_final ) /total_inital
+(total_inital - udpp_final ) /total_inital
+
+
+
+# percentage comparison
+plt.rcParams["figure.figsize"] = (20, 10)
+
+mincost_perc = df_mincost_total["reduction %"].to_numpy()
+zeros_idxs = np.where(mincost_perc==0)
+mincost_perc[mincost_perc == 0] = 1
+udpp_perc = df_udpp_total["reduction %"].to_numpy()
+udpp_perc[zeros_idxs[0]] = 1
+plt.scatter(df_mincost_total["initial costs"], udpp_perc / mincost_perc)
+# plt.plot(range(1000), df_nnbound_total["reduction %"].to_numpy()
+#          - df_udpp_total["reduction %"].to_numpy())
+plt.ticklabel_format(style='plain')
+plt.title("MINCOST - UDPP PERCENTAGE REDUCTION DISTANCE")
+plt.xlabel("PERCENTAGE REDUCTION DISTANCE")
+plt.ylabel("REDUCTION")
+plt.show()
+
+
+
+
+final_value = 1000
 plt.rcParams["figure.figsize"] = (20, 10)
 fig, ax = plt.subplots()
-ax.plot(df_mincost_total["initial costs"], df_mincost_total.reduction, label="MINCOST")
-ax.plot(df_mincost_total["initial costs"], df_nnbound_total.reduction,  label="NNBOUND")
-ax.plot(df_mincost_total["initial costs"], df_total[df_total.model == udpp_hfes_].reduction,  label="UDPP")
+ax.plot(df_mincost_total["initial costs"].iloc[:final_value], df_mincost_total.reduction.iloc[:final_value], label="MINCOST")
+ax.plot(df_mincost_total["initial costs"].iloc[:final_value], df_nnbound_total.reduction.iloc[:final_value],  label="NNBOUND")
+ax.plot(df_mincost_total["initial costs"].iloc[:final_value], df_total[df_total.model == udpp_hfes_].reduction.iloc[:final_value],  label="UDPP")
 plt.title("INITIAL COST-REDUCTION")
 plt.xlabel("INITIAL COST")
 plt.ylabel("REDUCTION")
@@ -148,7 +190,7 @@ plt.show()
 
 
 
-plt.scatter(df_udpp_total.c_reduction, df_udpp_total.n_flights, s=(df_udpp_total["reduction %"]) ** 2)
+plt.scatter(df_udpp_total.c_reduction, df_udpp_total.n_flights, s=(df_udpp_total["reduction %"]) ** 2, c=udpp_color, edgecolors='black')
 gll = plt.scatter([], [], s=10_000, marker='o', color='#1f77b4')
 gl = plt.scatter([], [], s=2_500, marker='o', color='#1f77b4')
 ga = plt.scatter([], [], s=1_000, marker='o', color='#1f77b4')

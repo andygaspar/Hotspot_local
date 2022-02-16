@@ -14,6 +14,10 @@ def make_performance_df(model):
     num_flights = [model.numFlights]
     initial_costs = [model.initialTotalCosts]
     final_costs = [model.compute_costs(model.flights, "final")]
+    initial_missed_con = [model.initial_missed_connecting]
+    final_missed_con = [model.final_missed_connecting]
+    initial_hitting_curfew = [model.initial_hitting_curfew]
+    final_hitting_curfew = [model.final_hitting_curfew]
     if model.initialTotalCosts > 0:
         reduction = [np.round(
             10000 * (model.initialTotalCosts - model.compute_costs(model.flights, "final")) / model.initialTotalCosts
@@ -36,11 +40,15 @@ def make_performance_df(model):
             model.compute_costs(airline.flights, "initial")
         ) / 100
                          )
+        initial_missed_con.append(airline.initial_missed_connecting)
+        final_missed_con.append(airline.final_missed_connecting)
+        initial_hitting_curfew.append(airline.initial_hitting_curfew)
+        final_hitting_curfew.append(airline.final_hitting_curfew)
 
     model.report = pd.DataFrame(
         {"airline": airline_names, "low_cost": is_low_cost, "num flights": num_flights, "initial costs": initial_costs,
-         "final costs": final_costs,
-         "reduction %": reduction})  # "initial delay": initial_delay, "final delay": final_delay})
+         "final costs": final_costs, "reduction %": reduction, "init_mis_con": initial_missed_con,
+         "final_mis_con": final_missed_con, "init_curfew": initial_hitting_curfew, "final_curfew": final_hitting_curfew})  # "initial delay": initial_delay, "final delay": final_delay})
 
 
 def make_df_solution(model):
