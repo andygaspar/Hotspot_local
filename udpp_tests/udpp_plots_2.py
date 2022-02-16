@@ -5,13 +5,15 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 
-plt.rcParams["figure.figsize"] = (20, 18)
-plt.rcParams.update({'font.size': 22})
-plt.rcParams["figure.autolayout"] = True
 
 mincost_color = '#1f77b4'
 nnbound_color = '#ff7f0e'
 udpp_color = '#2ca02c'
+
+
+plt.rcParams["figure.figsize"] = (20, 18)
+plt.rcParams.update({'font.size': 22})
+plt.rcParams["figure.autolayout"] = True
 
 udpp_hfes_ = "udpp_0"
 res = pd.read_csv("udpp_tests/cap_n_fl_test_1000_2.csv")
@@ -32,27 +34,10 @@ df_mincost_total = df_total[df_total.model == "mincost"]
 df_nnbound_total = df_total[df_total.model == "nnbound"]
 df_udpp_total = df_total[df_total.model == udpp_hfes_]
 
-plt.rcParams["figure.figsize"] = (20, 10)
-fig, ax = plt.subplots()
-ax.plot(df_mincost_total["initial costs"], df_mincost_total.reduction, label="MINCOST")
-ax.plot(df_mincost_total["initial costs"], df_nnbound_total.reduction, label="NNBOUND")
-ax.plot(df_mincost_total["initial costs"], df_total[df_total.model == udpp_hfes_].reduction, label="UDPP")
-plt.title("INITIAL COST-REDUCTION")
-plt.xlabel("INITIAL COST")
-plt.ylabel("REDUCTION")
-ax.ticklabel_format(style='plain')
-plt.grid(axis="y")
-plt.legend()
-plt.show()
-
-df_mincost_total['reduction %'].mean()
-df_nnbound_total['reduction %'].mean()
-df_udpp_total['reduction %'].mean()
 
 
-# total
+# total costs and reductions
 total_inital = df_mincost_total["initial costs"].sum()
-
 mincost_final = df_mincost_total["final costs"].sum()
 nnbound_final = df_nnbound_total["final costs"].sum()
 udpp_final = df_udpp_total["final costs"].sum()
@@ -66,12 +51,45 @@ udpp_total = df_udpp_total.reduction.sum()
 (total_inital - udpp_final ) /total_inital
 
 
-df_mincost_total.reduction.mean()
-df_nnbound_total.reduction.mean()
-df_udpp_total.reduction.mean()
+
+# percentage comparison
+plt.rcParams["figure.figsize"] = (20, 10)
+
+mincost_perc = df_mincost_total["reduction %"].to_numpy()
+zeros_idxs = np.where(mincost_perc==0)
+mincost_perc[mincost_perc == 0] = 1
+udpp_perc = df_udpp_total["reduction %"].to_numpy()
+udpp_perc[zeros_idxs[0]] = 1
+plt.scatter(df_mincost_total["initial costs"], udpp_perc / mincost_perc)
+# plt.plot(range(1000), df_nnbound_total["reduction %"].to_numpy()
+#          - df_udpp_total["reduction %"].to_numpy())
+plt.ticklabel_format(style='plain')
+plt.title("MINCOST - UDPP PERCENTAGE REDUCTION DISTANCE")
+plt.xlabel("PERCENTAGE REDUCTION DISTANCE")
+plt.ylabel("REDUCTION")
+plt.show()
 
 
-# reduction line plots
+
+
+final_value = 1000
+plt.rcParams["figure.figsize"] = (20, 10)
+fig, ax = plt.subplots()
+ax.plot(df_mincost_total["initial costs"].iloc[:final_value], df_mincost_total.reduction.iloc[:final_value], label="MINCOST")
+ax.plot(df_mincost_total["initial costs"].iloc[:final_value], df_nnbound_total.reduction.iloc[:final_value],  label="NNBOUND")
+ax.plot(df_mincost_total["initial costs"].iloc[:final_value], df_total[df_total.model == udpp_hfes_].reduction.iloc[:final_value],  label="UDPP")
+plt.title("INITIAL COST-REDUCTION")
+plt.xlabel("INITIAL COST")
+plt.ylabel("REDUCTION")
+ax.ticklabel_format(style='plain')
+plt.grid(axis="y")
+plt.legend()
+plt.show()
+
+
+
+
+
 
 plt.plot(df_mincost_total["initial costs"], df_mincost_total["reduction %"], label="MINCOST")
 plt.plot(df_mincost_total["initial costs"], df_nnbound_total["reduction %"], label="NNBOUND")
@@ -84,25 +102,29 @@ plt.grid(axis="y")
 plt.legend()
 plt.show()
 
+
 # percentage distance
 
 plt.plot(range(1000), df_mincost_total["reduction %"].to_numpy()
          - df_udpp_total["reduction %"].to_numpy())
 plt.plot(range(1000), df_nnbound_total["reduction %"].to_numpy()
          - df_udpp_total["reduction %"].to_numpy())
-x_pos = [int(i * 999 / 5) for i in range(6)]
+x_pos = [int(i*999/5) for i in range(6)]
 x = [int(df_mincost_total["initial costs"].iloc[i]) for i in x_pos]
 plt.xticks(x_pos, x)
 plt.show()
 
+
+
 # scatter frequency
 
-cap_red = [np.around(i * 0.1, decimals=1) for i in range(1, 9)]
-n_flights = [25 * i for i in range(17)]
+cap_red = [np.around(i*0.1, decimals=1) for i in range(1,9)]
+n_flights = [25*i for i in range(17)]
 np.around(0.89, decimals=1)
 reg_freq = [df_udpp_total[(df_udpp_total.c_reduction == c) & (df_udpp_total.n_flights >= n_flights[i])
-                          & (df_udpp_total.n_flights < n_flights[i + 1])].shape[0]
-            for c in cap_red for i in range(len(n_flights) - 1)]
+                          & (df_udpp_total.n_flights < n_flights[i+1])].shape[0]
+            for c in cap_red for i in range(len(n_flights)-1)]
+
 
 c_red_n_fl_combs = itertools.product(cap_red, n_flights[1:])
 
@@ -112,7 +134,7 @@ for i, j in c_red_n_fl_combs:
     n_fl.append(j)
 
 plt.rcParams["figure.figsize"] = (20, 18)
-plt.scatter(c_red, n_fl, s=np.array(reg_freq) * 50)
+plt.scatter(c_red, n_fl, s=np.array(reg_freq)*50)
 gll = plt.scatter([], [], s=10_000, marker='o', color='#1f77b4')
 gl = plt.scatter([], [], s=5_000, marker='o', color='#1f77b4')
 ga = plt.scatter([], [], s=1_000, marker='o', color='#1f77b4')
@@ -121,6 +143,9 @@ plt.title("FLIGHTS - CAPACITY REDUCTION FREQUENCY")
 plt.xlabel("CAPACITY")
 plt.ylabel("N FLIGHTS")
 plt.show()
+
+
+
 
 # initial costs
 
@@ -136,22 +161,24 @@ plt.xlabel("CAPACITY")
 plt.ylabel("N FLIGHTS")
 plt.show()
 
-plt.scatter(df_udpp_total.c_reduction, df_udpp_total.n_flights, s=df_udpp_total.reduction * 0.001, c=udpp_color)
-gll = plt.scatter([], [], s=10_000, marker='o', color=udpp_color)
-gl = plt.scatter([], [], s=5_000, marker='o', color=udpp_color)
-ga = plt.scatter([], [], s=1_000, marker='o', color=udpp_color)
+
+
+plt.scatter(df_udpp_total.c_reduction, df_udpp_total.n_flights, s=df_udpp_total.reduction * 0.001)
+gll = plt.scatter([], [], s=10_000, marker='o', color='#1f77b4')
+gl = plt.scatter([], [], s=5_000, marker='o', color='#1f77b4')
+ga = plt.scatter([], [], s=1_000, marker='o', color='#1f77b4')
 plt.legend((gll, gl, ga), ('\n\n10 ML\n', '5 ML\n\n', '1 ML'), scatterpoints=1,
            loc='upper right', ncol=1, fontsize=28)
-plt.title("FLIGHTS - CAPACITY REDUCTION - UDPP REDUCTION")
+plt.title("FLIGHTS - CAPACITY REDUCTION - REDUCTION")
 plt.xlabel("CAPACITY")
 plt.ylabel("N FLIGHTS")
 plt.show()
 
+
 plt.rcParams["figure.figsize"] = (20, 18)
-plt.scatter(df_udpp_total.c_reduction, df_udpp_total.n_flights, s=df_udpp_total["initial costs"] * 0.001,
-            edgecolors='black')
+plt.scatter(df_udpp_total.c_reduction, df_udpp_total.n_flights, s=df_udpp_total["initial costs"] * 0.001, edgecolors='black')
 plt.scatter(df_udpp_total.c_reduction, df_udpp_total.n_flights, s=df_udpp_total.reduction * 0.001)
-gll = plt.scatter([], [], s=10_000, marker='o', color=udpp_color)
+gll = plt.scatter([], [], s=10_000, marker='o', color='#1f77b4')
 gl = plt.scatter([], [], s=5_000, marker='o', color='#1f77b4')
 ga = plt.scatter([], [], s=1_000, marker='o', color='#1f77b4')
 plt.legend((gll, gl, ga), ('10 ML\n\n', '5 ML\n\n', '1 ML'), scatterpoints=1,
@@ -161,7 +188,9 @@ plt.xlabel("CAPACITY")
 plt.ylabel("N FLIGHTS")
 plt.show()
 
-plt.scatter(df_udpp_total.c_reduction, df_udpp_total.n_flights, s=(df_udpp_total["reduction %"]) ** 2)
+
+
+plt.scatter(df_udpp_total.c_reduction, df_udpp_total.n_flights, s=(df_udpp_total["reduction %"]) ** 2, c=udpp_color, edgecolors='black')
 gll = plt.scatter([], [], s=10_000, marker='o', color='#1f77b4')
 gl = plt.scatter([], [], s=2_500, marker='o', color='#1f77b4')
 ga = plt.scatter([], [], s=1_000, marker='o', color='#1f77b4')
@@ -171,6 +200,7 @@ plt.title("FLIGHTS - CAPACITY REDUCTION - REDUCTION %")
 plt.xlabel("CAPACITY")
 plt.ylabel("N FLIGHTS")
 plt.show()
+
 
 df_mincost_total["reduction"].mean()
 df_mincost_total["reduction"].std()
@@ -182,13 +212,16 @@ df_udpp_total["reduction"].std()
 plt.bar([1], df_mincost_total["reduction"].mean(), width=.2, yerr=df_mincost_total["reduction"].std())
 plt.bar([2], df_nnbound_total["reduction"].mean(), width=.2, yerr=df_nnbound_total["reduction"].std())
 plt.bar([3], df_udpp_total["reduction"].mean(), width=.2, yerr=df_udpp_total["reduction"].std()
-        )
-plt.xticks([1, 2, 3], ["MINCOST", "NNBOUND", "UDPP"])
+)
+plt.xticks([1,2,3], ["MINCOST", "NNBOUND", "UDPP"])
 plt.ticklabel_format(style='plain', axis='y')
 plt.title("REDUCTION")
 plt.ylabel("REDUCITON")
 plt.grid(axis="y")
 plt.show()
+
+
+
 
 df_mincost_total["reduction %"].mean()
 df_mincost_total["reduction %"].std()
@@ -200,13 +233,15 @@ df_udpp_total["reduction %"].std()
 plt.bar([1], df_mincost_total["reduction %"].mean(), width=.2, yerr=df_mincost_total["reduction %"].std())
 plt.bar([2], df_nnbound_total["reduction %"].mean(), width=.2, yerr=df_nnbound_total["reduction %"].std())
 plt.bar([3], df_udpp_total["reduction %"].mean(), width=.2, yerr=df_udpp_total["reduction %"].std()
-        )
-plt.xticks([1, 2, 3], ["MINCOST", "NNBOUND", "UDPP"])
+)
+plt.xticks([1,2,3], ["MINCOST", "NNBOUND", "UDPP"])
 plt.ticklabel_format(style='plain', axis='y')
 plt.title("REDUCTION PERCENTAGE")
 plt.ylabel("PERCENTAGE")
 plt.grid(axis="y")
 plt.show()
+
+
 
 airlines_dist = df_udpp[df_udpp.airline != "total"]
 
@@ -222,18 +257,24 @@ plt.ylabel("FREQUENCY")
 plt.grid(axis="y")
 plt.show()
 
+
+
+
+
 bins = [1, 2, 3, 4, 5, 10, 20, 30, 40, 50, 75, 100, 204]
 h = plt.hist(airlines_dist["num flights"], bins=bins, rwidth=1)
 plt.cla()
 plt.bar(range(h[0].shape[0]), h[0])
-plt.xticks(range(h[0].shape[0]),
-           ['1', '2', '3', '4', '5-9', '10-19', '20-29', '30-39', '40-49', '50-74', '75-99', '100->'])
+plt.xticks(range(h[0].shape[0]), ['1','2','3','4','5-9','10-19','20-29','30-39','40-49', '50-74','75-99','100->'])
 plt.title("N FLIGHTS PER AIRLINE (CLUSTER)")
 plt.xlabel("N FLIGHTS PER AIRLINE CLUSTER")
 plt.ylabel("FREQUENCY")
 plt.grid(axis="y")
 plt.show()
 # h[1][:-1]
+
+
+
 
 
 df_mincost_airlines = df_airlines[df_airlines.model == "mincost"]
@@ -253,6 +294,8 @@ mincost_reduction, mincost_reduction_std = get_mean_std(df_mincost_airlines, bin
 nnbound_reduction, nnbound_reduction_std = get_mean_std(df_nnbound_airlines, bins, "reduction")
 udpp_reduction, udpp_reduction_std = get_mean_std(df_udpp_airlines, bins, "reduction")
 
+
+
 plt.bar(np.array(range(len(mincost_reduction))) - .2, mincost_reduction, width=.2, yerr=mincost_reduction_std)
 plt.bar(np.array(range(len(nnbound_reduction))), nnbound_reduction, width=.2, yerr=nnbound_reduction_std)
 plt.bar(np.array(range(len(udpp_reduction))) + .2, udpp_reduction, width=.2, yerr=udpp_reduction_std)
@@ -263,6 +306,9 @@ plt.xlabel("N FLIGHTS PER AIRLINE (CLUSTER)")
 plt.ylabel("REDUCTION")
 plt.grid(axis="y")
 plt.show()
+
+
+
 
 mincost_reduction_p, mincost_reduction_p_std = get_mean_std(df_mincost_airlines, bins, "reduction %")
 nnbound_reduction_p, nnbound_reduction_p_std = get_mean_std(df_nnbound_airlines, bins, "reduction %")
@@ -278,6 +324,11 @@ plt.ylabel("REDUCTION %")
 plt.grid(axis="y")
 plt.show()
 
+
+
+
+
+
 plt.bar(np.array(range(len(mincost_reduction_p))) - .2, mincost_reduction_p, width=.2)
 plt.bar(np.array(range(len(nnbound_reduction_p))), nnbound_reduction_p, width=.2)
 plt.bar(np.array(range(len(udpp_reduction_p))) + .2, udpp_reduction_p, width=.2)
@@ -288,11 +339,11 @@ plt.ylabel("REDUCTION %")
 plt.grid(axis="y")
 plt.show()
 
+
 # reduction % reduced negative scale
 
 mincost_reduction_p_standard = np.array(mincost_reduction_p)
-mincost_reduction_p_standard[mincost_reduction_p_standard < 0] = mincost_reduction_p_standard[
-                                                                     mincost_reduction_p_standard < 0] / 100
+mincost_reduction_p_standard[mincost_reduction_p_standard < 0] = mincost_reduction_p_standard[mincost_reduction_p_standard < 0] /100
 plt.bar(np.array(range(len(mincost_reduction_p_standard))) - .2, mincost_reduction_p_standard, width=.2)
 plt.bar(np.array(range(len(nnbound_reduction_p))), nnbound_reduction_p, width=.2)
 plt.bar(np.array(range(len(udpp_reduction_p))) + .2, udpp_reduction_p, width=.2)
@@ -303,6 +354,9 @@ plt.xlabel("N FLIGHTS PER AIRLINE (CLUSTER)")
 plt.ylabel("REDUCTION %")
 plt.grid(axis="y")
 plt.show()
+
+
+
 
 # positive negative impacts
 
@@ -315,13 +369,15 @@ df_udpp_total["positive mins"].sum()
 df_udpp_total["negative mins"].sum()
 
 udpp_positive, udpp_positive_std = get_mean_std(df_udpp_airlines, bins, "positive")
-plt.bar(np.array(range(len(udpp_positive))) + .2, udpp_positive, width=.2, yerr=udpp_positive_std)
+plt.bar(np.array(range(len(udpp_positive))) + .2, udpp_positive, width=.2, yerr= udpp_positive_std)
 plt.xticks(range(len(udpp_positive)), bins[:-1])
 plt.title("MEAN POSITIVE IMPACT INSTANCE PER CLUSTER")
 plt.xlabel("CLUSTER")
 plt.ylabel("FREQUENCY mean")
 plt.grid(axis='y')
 plt.show()
+
+
 
 udpp_protections, udpp_protections_std = get_mean_std(df_udpp_airlines, bins, "protections")
 plt.bar(np.array(range(len(udpp_protections))) + .2, udpp_protections, width=.2)
@@ -359,9 +415,9 @@ plt.show()
 pos.run.unique().shape[0]
 neg.run.unique().shape[0]
 
-neg_top = neg[
-    ["airline", "num flights", "initial costs", "reduction %", "n_flights", "low_cost", "negative", "negative mins",
-     "airport", "reduction"]].sort_values(by="reduction")
+neg_top = neg[["airline", "num flights", "initial costs", "reduction %", "n_flights", "low_cost", "negative", "negative mins", "airport", "reduction"]].sort_values(by= "reduction")
+
+
 
 # ******************************* hfes 5
 
@@ -376,10 +432,13 @@ df_airlines_5 = res_5[res_5.airline != "total"]
 df_total_5 = df_total_5.sort_values(by="initial costs")
 df_udpp_total_5 = df_total_5[df_total_5.model == hfes_5]
 
+
+
+
 plt.rcParams["figure.figsize"] = (20, 10)
 fig, ax = plt.subplots()
-ax.plot(df_mincost_total["initial costs"], df_total[df_total.model == udpp_hfes_].reduction, label="UDPP 0")
-ax.plot(df_mincost_total["initial costs"], df_total_5[df_total_5.model == hfes_5].reduction, label="UDPP 5")
+ax.plot(df_mincost_total["initial costs"], df_total[df_total.model == udpp_hfes_].reduction,  label="UDPP 0")
+ax.plot(df_mincost_total["initial costs"], df_total_5[df_total_5.model == hfes_5].reduction,  label="UDPP 5")
 plt.title("UDPP_0 vs UDPP_5")
 plt.xlabel("INITIAL COST")
 plt.ylabel("REDUCTION")
@@ -388,7 +447,11 @@ plt.grid(axis="y")
 plt.legend()
 plt.show()
 
+
+
 df_udpp_airlines_5 = df_airlines_5[df_airlines_5.model == hfes_5]
+
+
 
 neg_5 = df_udpp_airlines_5[df_udpp_airlines_5.reduction < 0]
 
@@ -417,15 +480,19 @@ plt.show()
 pos.run.unique().shape[0]
 neg.run.unique().shape[0]
 
-neg_top_5 = neg_5[
-    ["airline", "num flights", "initial costs", "reduction %", "n_flights", "low_cost", "negative", "negative mins",
-     "airport", "reduction"]].sort_values(by="reduction")
+neg_top_5 = neg_5[["airline", "num flights", "initial costs", "reduction %", "n_flights", "low_cost", "negative", "negative mins", "airport", "reduction"]].sort_values(by= "reduction")
+
 
 df_udpp_airlines["comp time"].mean()
 df_udpp_airlines["comp time"].std()
 df_udpp_airlines["comp time"].max()
 
+
+
 comp_time = df_udpp_airlines[["num flights", "comp time"]]
+
+
+
 
 # # num flights **********************************
 #

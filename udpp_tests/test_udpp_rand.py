@@ -48,6 +48,8 @@ def run_test(df, n_runs, capacity_min: float = 0.,
         # max_model.print_performance()
 
         # print("u", regulation.nFlights, regulation.cReduction, i)
+        if i == 3:
+            print(34)
         udpp_model = UDPPmodel(slot_list, fl_list, hfes=5)
         t = time.time()
         udpp_model.run(optimised=True)
@@ -69,7 +71,7 @@ np.random.seed(0)
 
 df_test = pd.DataFrame(
     columns=["airline", "num flights", "initial costs", "final costs", "reduction %", "run", "n_flights", "c_reduction",
-             "model"])
+             "model", "init_mis_con", "final_mis_con", "init_curfew", "final_curfew"])
 
 df_test = run_test(n_runs=1000, df=df_test)
-df_test.to_csv("udpp_tests/cap_n_fl_test_1000_hfes.csv", index_label=False, index=False)
+df_test.to_csv("udpp_tests/cap_n_fl_test_1000_hfes_curfew.csv", index_label=False, index=False)

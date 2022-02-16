@@ -79,9 +79,11 @@ class RealisticSchedule:
 
             delay_cost_vect = np.array([cost_fun(new_times[j]) for j in range(n_flights)])
             if compute:
+                curfew = curfew[0] if curfew is not None else curfew
                 slot, flight = modelStructure.make_slot_and_flight(slot_time=new_times[i], slot_index=i, eta=times[i],
                                                                    flight_name=airline + str(i), airline_name=airline,
-                                                                   delay_cost_vect=delay_cost_vect, fl_type=fl_type)
+                                                                   delay_cost_vect=delay_cost_vect, fl_type=fl_type,
+                                                                   missed_connecting=missed_connected, curfew=curfew)
                 slot_list.append(slot)
                 flight.costFun = cost_fun
                 flight_list.append(flight)

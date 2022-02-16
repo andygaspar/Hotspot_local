@@ -42,6 +42,14 @@ class ModelStructure:
 
         self.df = self.make_df()
 
+        self.initial_missed_connecting = sum([airline.initial_missed_connecting for airline in self.airlines])
+
+        self.final_missed_connecting = 0
+
+        self.initial_hitting_curfew = sum([airline.initial_hitting_curfew for airline in self.airlines])
+
+        self.final_hitting_curfew = 0
+
     @staticmethod
     def compute_costs(flights, which):
         if which == "initial":
@@ -124,6 +132,11 @@ class ModelStructure:
             flight.delayVect = np.array(
                 [0 if slot.time < flight.eta else slot.time - flight.eta for slot in self.slots])
 
+    def update_missed_connecting(self):
+        self.final_missed_connecting = sum([airline.update_missed_connecting() for airline in self.airlines])
+
+    def update_hitting_curfew(self):
+        self.final_hitting_curfew = sum([airline.update_hitting_curfew() for airline in self.airlines])
 
     def make_airlines(self, air_ctor):
 
@@ -159,12 +172,14 @@ def make_slot_and_flight(slot_time: float, slot_index: int,
                          delay_cost_vect: np.array = None, udpp_priority=None, tna=None,
                          slope: float = None, margin_1: float = None, jump_1: float = None, margin_2: float = None,
                          jump_2: float = None,
-                         empty_slot=False, fl_type: str=None):
+                         empty_slot=False, fl_type: str=None,
+                         missed_connecting=None, curfew=None):
 
     slot = Slot(slot_index, slot_time)
     if not empty_slot:
         flight = Flight(slot, flight_name, airline_name, eta, delay_cost_vect,
-                        udpp_priority, tna, slope, margin_1, jump_1, margin_2, jump_2, fl_type=fl_type)
+                        udpp_priority, tna, slope, margin_1, jump_1, margin_2, jump_2, fl_type=fl_type,
+                        missed_connecting=missed_connecting, curfew=curfew)
     else:
         flight = None
     return slot, flight

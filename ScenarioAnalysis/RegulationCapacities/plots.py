@@ -7,6 +7,8 @@ plt.rcParams["figure.figsize"] = (25, 18)
 plt.rcParams.update({'font.size': 25})
 plt.rcParams["figure.autolayout"] = True
 
+
+
 flights = pd.read_csv("ScenarioAnalysis/Flights/flights_complete.csv")
 flights.shape[0]
 des = flights.Destination.unique()

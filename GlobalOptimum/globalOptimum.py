@@ -70,6 +70,8 @@ class GlobalOptimum(mS.ModelStructure):
             print("Simplex time ", end)
 
         self.assign_flights(self.x)
+        self.update_missed_connecting()
+        self.update_hitting_curfew()
 
         solution.make_solution(self)
 
@@ -77,6 +79,8 @@ class GlobalOptimum(mS.ModelStructure):
             if flight.eta > flight.newSlot.time:
                 print("********************** negative impact *********************************",
                       flight, flight.eta, flight.newSlot.time)
+
+
 
     def assign_flights(self, sol):
         for flight in self.flights:

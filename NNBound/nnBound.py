@@ -98,7 +98,8 @@ class NNBoundModel(mS.ModelStructure):
             print("Simplex time ", end)
 
         self.assign_flights(self.x)
-
+        self.update_missed_connecting()
+        self.update_hitting_curfew()
         solution.make_solution(self)
 
 
