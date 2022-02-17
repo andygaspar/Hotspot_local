@@ -495,6 +495,44 @@ comp_time = df_udpp_airlines[["num flights", "comp time"]]
 
 
 
+# curfew and missed conntecting
+
+udpp_hfes_ = "udpp_0"
+res = pd.read_csv("udpp_tests/cap_n_fl_test_1000_hfes_curfew.csv")
+res["reduction"] = res["initial costs"] - res["final costs"]
+df_udpp = res[res.model == "udpp_5"]
+
+df_udpp_total_curfew = df_udpp[df_udpp.airline == "total"]
+
+init_mis_con = df_udpp_total_curfew.init_mis_con.sum()
+final_mis_con = df_udpp_total_curfew.final_mis_con.sum()
+
+init_curfew = df_udpp_total_curfew.init_curfew.sum()
+final_curfew = df_udpp_total_curfew.final_curfew.sum()
+
+
+plt.rcParams["figure.figsize"] = (10, 18)
+plt.bar([1], init_mis_con, width=.2, color='grey')
+plt.bar([1.3], final_mis_con, width=.2, color=udpp_color)
+plt.xticks([1,1.3], ["INITIAL", "FINAL"])
+plt.ticklabel_format(style='plain', axis='y')
+plt.title("MISSED CONNECTING")
+plt.ylabel("NUM PAX")
+plt.grid(axis="y")
+plt.show()
+
+
+plt.rcParams["figure.figsize"] = (10, 18)
+plt.bar([1], init_curfew, width=.2, color='grey')
+plt.bar([1.3], final_curfew, width=.2, color=udpp_color)
+plt.xticks([1,1.3], ["INITIAL", "FINAL"])
+plt.ticklabel_format(style='plain', axis='y')
+plt.title("HITTING CURFEW")
+plt.ylabel("NUM FLIGHTS")
+plt.grid(axis="y")
+plt.show()
+
+
 
 # # num flights **********************************
 #
