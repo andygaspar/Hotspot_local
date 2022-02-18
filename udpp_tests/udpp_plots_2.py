@@ -50,9 +50,27 @@ mincost_total = df_mincost_total.reduction.sum()
 nnbound_total = df_nnbound_total.reduction.sum()
 udpp_total = df_udpp_total.reduction.sum()
 
-(total_inital - mincost_final ) /total_inital
-(total_inital - nnbound_final ) /total_inital
-(total_inital - udpp_final ) /total_inital
+mincost_total_perc = (total_inital - mincost_final ) /total_inital
+nnbound_total_perc = (total_inital - nnbound_final ) /total_inital
+udpp_total_perc = (total_inital - udpp_final ) /total_inital
+udpp_total_perc
+
+
+plt.rcParams["figure.figsize"] = (10, 18)
+plt.bar([1], df_mincost_total.reduction.sum(), width=.8)
+plt.bar([2], df_nnbound_total.reduction.sum(), width=.8)
+plt.bar([3], df_udpp_total.reduction.sum(), width=.8)
+plt.xticks([1, 2, 3], ["MINCOST", "NNBOUND", "UDPP"])
+vert_shift = 5000000
+plt.annotate('61.5%', (1, mincost_total + vert_shift), ha="center")
+plt.annotate('57.0%', (2, nnbound_total + vert_shift), ha="center")
+plt.annotate('34.0%', (3, udpp_total + vert_shift), ha="center")
+plt.ticklabel_format(style='plain', axis='y')
+plt.title("REDUCTION PERCENTAGE")
+plt.ylabel("PERCENTAGE")
+plt.grid(axis="y")
+plt.show()
+
 
 
 
