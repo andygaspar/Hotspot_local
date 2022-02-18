@@ -19,6 +19,10 @@ udpp_hfes_ = "udpp_0"
 res = pd.read_csv("udpp_tests/cap_n_fl_test_1000_2.csv")
 res["reduction"] = res["initial costs"] - res["final costs"]
 
+bins = [1, 2, 3, 4, 5, 10, 20, 30, 40, 50, 75, 100, 204]
+clusters = ['1','2','3','4','5-9','10-19','20-29','30-39','40-49', '50-74','75-99','100->']
+
+
 # p = res[(res.run == 345) & (res.model == "udpp_0")]
 
 
@@ -261,11 +265,10 @@ plt.show()
 
 
 
-bins = [1, 2, 3, 4, 5, 10, 20, 30, 40, 50, 75, 100, 204]
 h = plt.hist(airlines_dist["num flights"], bins=bins, rwidth=1)
 plt.cla()
 plt.bar(range(h[0].shape[0]), h[0])
-plt.xticks(range(h[0].shape[0]), ['1','2','3','4','5-9','10-19','20-29','30-39','40-49', '50-74','75-99','100->'])
+plt.xticks(range(h[0].shape[0]), clusters)
 plt.title("N FLIGHTS PER AIRLINE (CLUSTER)")
 plt.xlabel("N FLIGHTS PER AIRLINE CLUSTER")
 plt.ylabel("FREQUENCY")
@@ -296,16 +299,22 @@ udpp_reduction, udpp_reduction_std = get_mean_std(df_udpp_airlines, bins, "reduc
 
 
 
+# ********************** reduction
+
 plt.bar(np.array(range(len(mincost_reduction))) - .2, mincost_reduction, width=.2, yerr=mincost_reduction_std)
 plt.bar(np.array(range(len(nnbound_reduction))), nnbound_reduction, width=.2, yerr=nnbound_reduction_std)
 plt.bar(np.array(range(len(udpp_reduction))) + .2, udpp_reduction, width=.2, yerr=udpp_reduction_std)
-plt.xticks(range(len(mincost_reduction)), bins[:-1])
+plt.xticks(range(len(mincost_reduction)), clusters)
 plt.ticklabel_format(style='plain', axis='y')
 plt.title("MEAN REDUCTION PER AIRLINE CLUSTER")
 plt.xlabel("N FLIGHTS PER AIRLINE (CLUSTER)")
 plt.ylabel("REDUCTION")
 plt.grid(axis="y")
 plt.show()
+
+
+
+
 
 
 
@@ -347,7 +356,7 @@ mincost_reduction_p_standard[mincost_reduction_p_standard < 0] = mincost_reducti
 plt.bar(np.array(range(len(mincost_reduction_p_standard))) - .2, mincost_reduction_p_standard, width=.2)
 plt.bar(np.array(range(len(nnbound_reduction_p))), nnbound_reduction_p, width=.2)
 plt.bar(np.array(range(len(udpp_reduction_p))) + .2, udpp_reduction_p, width=.2)
-plt.xticks(range(len(mincost_reduction_p)), bins[:-1])
+plt.xticks(range(len(mincost_reduction_p)), clusters)
 plt.yticks(range(-10, 61, 10), [-1000, 0, 10, 20, 30, 40, 50, 60])
 plt.title("MEAN REDUCTION % PER AIRLINE CLUSTER")
 plt.xlabel("N FLIGHTS PER AIRLINE (CLUSTER)")
@@ -505,9 +514,13 @@ df_udpp_total_curfew = df_udpp[df_udpp.airline == "total"]
 init_mis_con = df_udpp_total_curfew.init_mis_con.sum()
 final_mis_con = df_udpp_total_curfew.final_mis_con.sum()
 
+1 - final_mis_con/init_mis_con
+
+
 init_curfew = df_udpp_total_curfew.init_curfew.sum()
 final_curfew = df_udpp_total_curfew.final_curfew.sum()
 
+1 - final_curfew/init_curfew
 
 plt.rcParams["figure.figsize"] = (10, 18)
 plt.bar([1], init_mis_con, width=.2, color='grey')
