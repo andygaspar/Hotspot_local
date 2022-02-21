@@ -15,7 +15,7 @@ flights.to_csv("ScenarioAnalysis/Flights/flights.csv", index_label=False, index=
 
 flights_regulated = flights[flights.MPR != "X"]
 
-low_costs = pd.read_csv("ScenarioAnalysis/Flights/2017-LCC.csv")
+low_costs = pd.read_csv("ScenarioAnalysis/df_frequencies/2017-LCC.csv")
 
 flights_regulated = flights_regulated[flights_regulated.AircraftType.isin(aircraft_cluster.AircraftType)]
 airports = pd.read_csv("ScenarioAnalysis/airportMore25M.csv")

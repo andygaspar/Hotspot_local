@@ -31,8 +31,8 @@ def set_dfs():
     cap["end"] = cap.day_end * 60 * 24 + cap.min_end
     cap.loc[cap.ReferenceLocationName == "EGLL", "Capacity"] = 46
     cap_corner = pd.read_csv("ScenarioAnalysis/RegulationCapacities/capacity_from_corner.csv")
-    # cap = cap[~cap["ReferenceLocationName"].isin(cap_corner.ReferenceLocationName)]
-    # cap = pd.concat([cap_corner, cap[["ReferenceLocationName", "Capacity"]]], ignore_index=True)
+    cap = cap[~cap["ReferenceLocationName"].isin(cap_corner.ReferenceLocationName)]
+    cap = pd.concat([cap_corner, cap[["ReferenceLocationName", "Capacity"]]], ignore_index=True)
 
     reg1 = pd.read_csv("ScenarioAnalysis/RegulationCapacities/1907_regulations.csv")
     reg1["month"] = [7 for _ in range(reg1.shape[0])]
@@ -42,7 +42,8 @@ def set_dfs():
 
     reg = pd.concat([reg1, reg2], ignore_index=True)
     reg = reg[reg.ReferenceLocationRole == "A"]
-    reg = reg.replace(to_replace="EBBR/MB", value="EBBR")
+    # reg = reg.replace(to_replace="EBBR/MB", value="EBBR")
+    reg.ReferenceLocationName = reg.ReferenceLocationName.apply(lambda air: air[:4])
 
     days = reg.StartTimestamp.apply(lambda d: d[:10]).unique()
     days_dict = dict(zip(days, range(days.shape[0])))
@@ -105,8 +106,8 @@ def set_dfs():
     reg["capacity_reduction"] = (reg.initial_capacity - reg.actual_capacity) / reg.initial_capacity
     reg["capacity_reduction_mean"] = (reg.initial_capacity - reg.actual_capacity_mean) / reg.initial_capacity
 
-    reg.to_csv("ScenarioAnalysis/RegulationCapacities/regulations.csv", index_label=False, index=False)
-    cap.to_csv("ScenarioAnalysis/RegulationCapacities/capacities.csv", index_label=False, index=False)
+    reg.to_csv("ScenarioAnalysis/RegulationCapacities/regulations_.csv", index_label=False, index=False)
+    # cap.to_csv("ScenarioAnalysis/RegulationCapacities/capacities.csv", index_label=False, index=False)
 
 
 def get_airport_set_dicts():

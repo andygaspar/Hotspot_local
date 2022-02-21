@@ -139,3 +139,16 @@ for airport in cap.ReferenceLocationName.unique():
 
 np.mean(max_capacity)
 
+
+import pandas as pd
+reg = pd.read_csv("ScenarioAnalysis/RegulationCapacities/regulations_.csv")
+reg_25 = reg[reg.capacity_reduction >= 0.1]
+airports = pd.read_csv("ScenarioAnalysis/airportMore25M.csv")
+reg_25 = reg_25[reg_25.ReferenceLocationName.isin(airports.Airport)]
+
+reg_25.to_csv("ScenarioAnalysis/RegulationCapacities/regulations_25_nozero.csv")
+
+r = pd.read_csv("ScenarioAnalysis/RegulationCapacities/1907_regulations.csv")
+r1 = pd.read_csv("ScenarioAnalysis/RegulationCapacities/1908_regulations.csv")
+
+re = pd.concat([r,r1], ignore_index=True)
